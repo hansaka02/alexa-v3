@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "sudo systemctl start mariadb && sudo systemctl status mariadb",
-    "build" : "npm install && npm install python-shell && node -e `const { PythonShell } = require('python-shell'); PythonShell.runString('import os; os.system(\'pip3 install speedtest-cli\')', null, (err, results) => { if (err) throw err; console.log(results); });`
-",
+    "build" : "npm install && npm install python-shell && ",
     "start": "node index"
   },
   "author": "hansaka",
