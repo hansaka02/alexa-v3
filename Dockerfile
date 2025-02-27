@@ -1,22 +1,19 @@
-# Use Heroku's official Cloud Native Buildpacks builder
-FROM heroku/builder:22
+FROM node:20
 
-# Set the working directory
+RUN apt update \
+    && apt install software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt update \
+    && apt install python3.10
 
-
-
-# Set environment variables (optional)
-ENV NODE_ENV=production
-ENV PYTHONUNBUFFERED=1
-
-# Build the application using Node.js & Python buildpacks
-RUN pack build my-app \
-    --builder heroku/builder:22 \
-    --buildpack heroku/nodejs \
-    --buildpack heroku/python
+WORKDIR ./api
 
 
+
+
+COPY package-*.json .
 RUN npm install
-RUN pip3 install speedtest-cli
-# Run the container
-CMD ["npm", "start"]
+
+COPY . .
+EXPOSE 4001
+CMD npm start
