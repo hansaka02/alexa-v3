@@ -4,8 +4,6 @@ FROM heroku/builder:22
 # Set the working directory
 
 
-# Copy your application code into the container
-COPY . .
 
 # Set environment variables (optional)
 ENV NODE_ENV=production
