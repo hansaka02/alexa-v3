@@ -31,6 +31,7 @@ const db = mysql.createConnection({
   user: DB_UNAME,
   password: DB_PASS,
   database: DB_NAME,
+  port:27250
 });
 
 db.connect((err) => {
@@ -58,7 +59,9 @@ function ai(message, thread_id, callback) {
 
     if (results.length > 0) {
       try {
-        conversations = JSON.parse(results[0].conventions) || [];
+        const abc =  results[0].conventions
+        //console.log(abc);
+        conversations = abc || [];
       } catch (e) {
         console.error('Error parsing conventions data:', e);
       }

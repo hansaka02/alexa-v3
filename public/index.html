@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Bot - Baileys API</title>
+
+    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/wcAAwAB/rt2Br0AAAAASUVORK5CYII=" type="image/png">
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            flex: 1;
+        }
+
+        h1 {
+            color: #25D366;
+        }
+
+        p {
+            font-size: 18px;
+        }
+
+        #status {
+            font-weight: bold;
+            color: red;
+        }
+
+        .developer {
+            font-size: 14px;
+            color: #333;
+            margin-top: 20px;
+        }
+
+        .copyright {
+            font-size: 14px;
+            color: #888;
+            margin-top: auto;
+            padding: 10px 0;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .image-container img {
+            max-width: 250px;
+            height: auto;
+            border-radius: 10px;
+        }
+
+.whatsapp-button {
+    background-color: #25D366;
+    color: white;
+    align-self: center;
+    font-size: 16px; /* Adjusted font size */
+    padding: 8px 20px; /* Adjusted padding for better control over width */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+    display: inline-block; /* Prevents full-width expansion */
+    width: auto; /* Makes the width auto based on content */
+    max-width: 250px; /* Optional: Set a maximum width */
+}
+
+.whatsapp-button:hover {
+    background-color: #128C7E;
+}
+
+    </style>
+</head>
+<body>
+    <h1>Alexa v3</h1>
+
+    <div class="image-container">
+        <img src="https://pngimg.com/uploads/anime_girl/anime_girl_PNG33.png" alt="Anime Girl">
+    </div>
+
+    <p>Powered by Baileys API</p>
+    <p>Status: <span id="status">Checking...</span></p>
+
+    <!-- WhatsApp Button -->
+    <p>Message to bot</p>
+    <button class="whatsapp-button" onclick="sendMessage()">WhatsApp</button>
+
+    <script>
+        async function checkStatus() {
+            try {
+                const response = await fetch('/status'); // Endpoint to check bot status
+                const data = await response.json();
+                document.getElementById('status').textContent = data.status;
+                document.getElementById('status').style.color = data.status === "Online" ? "green" : "red";
+            } catch (error) {
+                document.getElementById('status').textContent = "Offline";
+            }
+        }
+
+        checkStatus();
+        setInterval(checkStatus, 5000); // Refresh status every 5 seconds
+
+        // Fetch the bot's phone number
+        async function getPhoneNumber() {
+            try {
+                const response = await fetch('/get-phone-number'); // Server endpoint to fetch phone number
+                const data = await response.json();
+                return data.phoneNumber;
+            } catch (error) {
+                console.error('Failed to fetch phone number:', error);
+                return null;
+            }
+        }
+
+        // Send WhatsApp message function
+        async function sendMessage() {
+            const phoneNumber = await getPhoneNumber();
+            if (phoneNumber) {
+                const message = 'Hello, I want to talk to the Alexa!'; // The message to send
+                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            } else {
+                alert('Unable to retrieve bot phone number.');
+            }
+        }
+    </script>
+
+    <div class="developer">
+        <p>Developer: Hansaka</p>
+    </div>
+
+    <div class="copyright">
+        <p>&copy; 2025 AlexaInc Sri Lanka. All rights reserved.</p>
+    </div>
+</body>
+</html>
