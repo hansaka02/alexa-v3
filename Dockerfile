@@ -7,9 +7,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies and Python 3.10
 RUN apt update \
     && apt install -y software-properties-common \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
-    && apt update \
-    && apt install -y python3.10 python3.10-venv python3.10-dev \
     && apt update \
     && apt install speedtest-net \
     && apt clean \
