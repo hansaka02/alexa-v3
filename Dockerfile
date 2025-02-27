@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update \
     && apt install -y software-properties-common \
     && apt update \
-    && apt install speedtest-net \
+    && apt install speedtest-cli \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
