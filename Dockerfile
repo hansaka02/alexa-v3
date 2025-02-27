@@ -1,19 +1,33 @@
+# Use official Node.js 20 image as base
 FROM node:20
 
-RUN apt update \
-    && apt install software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt update \
-    && apt install python3.10
+# Set noninteractive mode to prevent user prompts
+ENV DEBIAN_FRONTEND=noninteractive
 
+# Install dependencies and Python 3.10
+RUN apt update \
+    && apt install -y software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt update \
+    && apt install -y python3.10 python3.10-venv python3.10-dev \
+    && apt update \
+    && apt install speedtest-net \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
 WORKDIR ./api
 
+# Copy package.json and install Node.js dependencies
+COPY package*.json ./
+RUN npm install --only=production
 
 
-
-COPY package-*.json .
-RUN npm install
-
+# Copy the rest of the application files
 COPY . .
+
+# Expose the application port
 EXPOSE 4001
-CMD npm start
+
+# Run the application
+CMD ["npm", "start"]
