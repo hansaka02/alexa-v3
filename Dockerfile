@@ -1,18 +1,23 @@
-# Use the Heroku Buildpacks builder image
-FROM heroku/pack:20
+# Use Heroku's official Cloud Native Buildpacks builder
+FROM heroku/builder:22
 
 # Set the working directory
-WORKDIR ./api
+WORKDIR /app
 
-# Copy the source code into the container
+# Copy your application code into the container
 COPY . .
 
-# Run pack build with both Node.js and Python buildpacks
+# Set environment variables (optional)
+ENV NODE_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+# Build the application using Node.js & Python buildpacks
 RUN pack build my-app \
-    
+    --builder heroku/builder:22 \
     --buildpack heroku/nodejs \
     --buildpack heroku/python
-    
+
+
 RUN npm install
 RUN pip3 install speedtest-cli
 # Run the container
