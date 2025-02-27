@@ -208,7 +208,7 @@ async function handleMessage(AlexaInc, { messages, type }) {
                           🔹 General users can use AI and fun commands
 `
 
-                AlexaInc.sendMessage(msg.key.remoteJid, buttonMessage,{ quoted: msg });
+                AlexaInc.sendMessage(msg.key.remoteJid, {text:menu},{ quoted: msg });
             break
 
 
