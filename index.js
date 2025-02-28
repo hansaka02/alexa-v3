@@ -155,6 +155,6 @@ app.get('/login', (req, res) => {
 });
 
 // Start server
-app.listen(PORT+1, () => {
+app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
