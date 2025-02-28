@@ -241,10 +241,12 @@ AlexaInc.sendMessage(msg.key.remoteJid,{text:repmg},{ quoted: msg })
 ai(messageText, sender, (err, reply) => {
   if (err) {
     console.error("Error:", err);
-  } else {
+  } else {    if (msg.key.remoteJid == 'status@broadcast') {
+
+    }else{
     //console.log('Chatbot Response:', reply);
     AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
-    AlexaInc.readMessages([msg.key]);
+    AlexaInc.readMessages([msg.key]);}
   }
 });
         
