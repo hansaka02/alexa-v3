@@ -2,7 +2,7 @@ const { exec } = require("child_process");
 
 function runSpeedTest() {
     return new Promise((resolve, reject) => {
-        exec("speedtest-cli --server 12329 --json   ", (error, stdout, stderr) => {
+        exec("speedtest-cli --json   ", (error, stdout, stderr) => {
             if (error) {
                 reject("Error running speed test: " + error.message);
                 return;
