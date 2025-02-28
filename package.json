@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "sudo systemctl start mariadb && sudo systemctl status mariadb",
-    "build" : "npm install",
-    "start": "pm2-runtime index.js"
+    "start": "node app"
   },
   "author": "hansaka",
   "license": "ISC",
@@ -30,6 +29,7 @@
     "node-fetch": "^3.3.2",
     "node-nlp": "^5.0.0-alpha.5",
     "openai": "^4.85.4",
+    "performance-now": "^2.1.0",
     "pm2": "^5.4.3",
     "puppeteer": "^24.3.0",
     "python-shell": "^5.0.0",
