@@ -15,7 +15,8 @@ const app = express();
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
-const PORT = 8000;
+const PORT = process.env.PORT || 3000;
+const si = require('systeminformation');
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -133,7 +134,6 @@ function isAuthenticated(req, res, next) {
         return next();
     }
     res.status(401).json({ success: false, message: "Unauthorized" });
-    res.json({ isLoggedIn: false });
 }
 
 // Route to check if user is logged in
@@ -155,7 +155,35 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
+app.get('/sysstats', async (req, res) => {
+  try {
+    const cpuData = await si.currentLoad();
+    const memData = await si.mem();
+    const netData = await si.networkStats();
+
+    // CPU usage in percentage (0-100)
+    const cpuUsage = cpuData.currentLoad;
+
+    // Memory usage in percentage (0-100)
+    const memUsage = (memData.used / memData.total) * 100;
+
+    // networkStats() returns an array (one element per network interface).
+    // We'll use the first interface (netData[0]) or you can sum them if needed.
+    const downloadSpeed = netData[0].rx_sec; // bytes/sec
+    const uploadSpeed   = netData[0].tx_sec; // bytes/sec
+
+    res.json({
+      cpu: cpuUsage,
+      memory: memUsage,
+      downloadSpeed,
+      uploadSpeed
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve system stats' });
+  }
+});
+
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT+1, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
