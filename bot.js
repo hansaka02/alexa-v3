@@ -3,8 +3,8 @@ const path = require('path');
 const axios = require('axios');
 const { downloadMediaMessage, proto } = require('@whiskeysockets/baileys');
 //const { Button, ButtonMessage } = require('@whiskeysockets/baileys').WA_MESSAGE_TYPE;
-const { fileutc } = require('./res/fu.js');
-const {runSpeedTest} = require('./res/speed_test.js')
+const { fileutc } = require('./res/js/fu.js');
+const {runSpeedTest} = require('./res/js/speed_test.js')
 const FormData = require('form-data');
 const chalk = require('kleur');
 const TEMP_DIR = path.join(__dirname, 'temp');
@@ -190,25 +190,26 @@ async function handleMessage(AlexaInc, { messages, type }) {
                 headerType: 1,
             };
               const menu = `🚀 ALEXXA BOT MENU 🚀
-                          👤 Bot Name: Alexxa
-                          💬 Creator: Hansaka
+          👤 Bot Name: Alexxa
+          💬 Creator: Hansaka
 
-                          📜 COMMANDS LIST
-                          🔹 .hi - Say hello
-                          🔹 .help - Get this menu
-                          🔹 .ping - Check bot status
-                          🔹 .time - Get current time
-                          🔹 .weather <city> - Get weather info
-                          🔹 .sticker - Convert image to sticker
-                          🔹 .ai <message> - Chat with AI
+          📜 COMMANDS LIST
+          🔹 .hi - Say hello
+          🔹 .help - Get this menu
+          🔹 .ping - Check bot status
+          🔹 .time - Get current time
+          🔹 .weather <city> - Get weather info
+          🔹 .sticker - Convert image to sticker
+          🔹 .owner  - Chat with Owner
 
-                          🔒 Authority
+          🔒 Authority
 
-                          🔹 Only Admins can use moderation commands
-                          🔹 General users can use AI and fun commands
+          🔹 Only Admins can use moderation commands
+          🔹 General users can use AI and fun commands
 `
 
-                AlexaInc.sendMessage(msg.key.remoteJid, {text:menu},{ quoted: msg });
+                AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/alexa.jpeg'},caption: menu},{ quoted: msg });
+                AlexaInc.readMessages([msg.key]);
             break
 
 
@@ -216,6 +217,7 @@ async function handleMessage(AlexaInc, { messages, type }) {
 case"ping":
 
 AlexaInc.sendMessage(msg.key.remoteJid,{text:'testing ping.......'},{ quoted: msg })
+AlexaInc.readMessages([msg.key]);
 const str = await runSpeedTest();
  const repmg = `
 Speed test results
@@ -242,6 +244,7 @@ ai(messageText, sender, (err, reply) => {
   } else {
     //console.log('Chatbot Response:', reply);
     AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
+    AlexaInc.readMessages([msg.key]);
   }
 });
         
