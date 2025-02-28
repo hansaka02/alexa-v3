@@ -15,7 +15,7 @@ const app = express();
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
-const PORT = process.env.PORT || 3000;
+const PORT = 8000;
 const si = require('systeminformation');
 
 app.use(express.static('public'));
@@ -184,6 +184,6 @@ app.get('/sysstats', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT+1, () => {
+app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
