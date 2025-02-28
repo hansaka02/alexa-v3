@@ -133,6 +133,7 @@ function isAuthenticated(req, res, next) {
         return next();
     }
     res.status(401).json({ success: false, message: "Unauthorized" });
+    res.json({ isLoggedIn: false });
 }
 
 // Route to check if user is logged in
