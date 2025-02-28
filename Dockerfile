@@ -17,7 +17,9 @@ WORKDIR ./api
 
 # Copy package.json and install Node.js dependencies
 COPY package*.json ./
-RUN npm install --only=production
+RUN npm install --only=production && npm install pm2 -g
+ENV PM2_PUBLIC_KEY 1zsvo0veybinf79
+ENV PM2_SECRET_KEY xes5q970ng7whs5
 
 
 # Copy the rest of the application files
