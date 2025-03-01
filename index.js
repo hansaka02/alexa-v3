@@ -134,7 +134,7 @@ function isAuthenticated(req, res, next) {
         return next();
     }
     res.status(401).json({ success: false, message: "Unauthorized" })
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+   // res.sendFile(path.join(__dirname, 'public', 'login.html'));
 
 }
 
