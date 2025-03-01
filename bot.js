@@ -1,6 +1,8 @@
 const fs = require('fs-extra');
 const path = require('path');
+const si = require('os');
 const axios = require('axios');
+const sharp = require('sharp');
 const { downloadMediaMessage, proto } = require('@whiskeysockets/baileys');
 //const { Button, ButtonMessage } = require('@whiskeysockets/baileys').WA_MESSAGE_TYPE;
 const { fileutc } = require('./res/js/fu.js');
@@ -19,11 +21,49 @@ const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
 
+async function convertToSticker(imagePath, stickerPath) {
+    await sharp(imagePath)
+        .resize({width: 512, height: 512, fit: 'inside', withoutEnlargement: true}) // Resize the image to 512x512 as required for stickers
+
+        .webp({ quality: 100, lossless: true }) // Convert to WebP format
+        .toFile(stickerPath);
+    console.log(`Image converted to sticker: ${stickerPath}`);
+}
+
+
+
+function generateRandomToken(length = 15,sender,pushName) {
+    const characters = `${sender}img${pushName}`;
+    let token = '';
+    
+    for (let i = 0; i < length; i++) {
+        // Randomly select a character from the characters string
+        const randomChar = characters.charAt(Math.floor(Math.random() * characters.length));
+        token += randomChar;
+    }
+    
+    return token;
+}
+
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: token
 });
 const util = require('util');
+
+
+//console.log('🖥️', cpuData)
+//console.log('𝐑𝐚𝐦', Math.round(memUsed/1e+9) , 'GB of', memTotal)
+const moment = require('moment-timezone')
+
+
+function getGreeting() {
+    const hour = moment().tz("Asia/Colombo").hour();
+    return (hour >= 5 && hour < 12) && "Good Morning ☀️" ||
+           (hour >= 12 && hour < 17) && "Good Afternoon ☀️" ||
+           (hour >= 17 && hour < 20) && "Good Evening 🌆" ||
+           "Good Night 🌙";
+}
 
 // Create MySQL connection
 const db = mysql.createConnection({
@@ -60,8 +100,12 @@ function ai(message, thread_id, callback) {
     if (results.length > 0) {
       try {
         const abc =  results[0].conventions
-        //console.log(abc);
-        conversations = abc || [];
+        //console.log(abc);    
+        if (typeof abc === 'string') {
+      conversations = JSON.parse(abc);
+    } else if (Array.isArray(abc)) {
+      conversations = abc || [];
+    }
       } catch (e) {
         console.error('Error parsing conventions data:', e);
       }
@@ -156,68 +200,96 @@ fs.ensureDirSync(TEMP_DIR);
 async function handleMessage(AlexaInc, { messages, type }) {
     if (type === 'notify') {
         const msg = messages[0];
-        const sender = msg.key.remoteJid;
+let sender = msg.key.remoteJid; // Default sender
 
+// Check if the message is from a group or a broadcast list
+if (sender.endsWith('@g.us') || sender.endsWith('@broadcast')) {
+    sender = msg.key.participant; // Assign participant ID instead
+}
 
         if (!msg.key.fromMe) {
-            let messageText = msg.message?.conversation || msg.message?.extendedTextMessage?.text || null;
+                AlexaInc.readMessages([msg.key]);
+            let messageText = null;
+
+// Check for conversation or extendedTextMessage first (for text messages)
+messageText = msg.message?.conversation ||
+              msg.message?.extendedTextMessage?.text ||
+              // Check for media message captions (image, video, document)
+              msg.message?.imageMessage?.caption ||
+              msg.message?.videoMessage?.caption ||
+              msg.message?.documentMessage?.caption ||
+              // Handle cases where there are no captions (sticker, audio, etc.)
+              null;
+  const messageonlyText = msg.message?.conversation ||
+              msg.message?.extendedTextMessage?.text
 
 
+ //console.log(msg.message.messageContextInfo);
 
+           if (messageText) {
+    // Check if the message has any text to process
+    const firstWord = messageText.trim().split(/\s+/)[0].toLowerCase();
 
-            if (messageText) {
+              if (msg.key.remoteJid == 'status@broadcast') {
 
-              //console.log(msg);
-                console.log(chalk.red().bold(msg.pushName) +chalk.yellow().bold(`[${sender}]`)+ ': ' + chalk.blue().bold(messageText));
-
-
-            const firstWord = messageText.trim().split(/\s+/)[0].toLowerCase();
-            if (firstWord.startsWith(".") || firstWord.startsWith("/") || firstWord.startsWith("\\")) {
+    } else if (firstWord.startsWith(".") || firstWord.startsWith("/") || firstWord.startsWith("\\")) {
         let command = firstWord.slice(1);; // Assign as command
+
+
+    const cpuData = await si.cpus()[0].model;
+const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
+const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
 
             // command handle
             switch (command){
-            case"menu":
-                       const buttons = [
-                { buttonId: 'button1', buttonText: { displayText: 'Option 1' }, type: 1 },
-                { buttonId: 'button2', buttonText: { displayText: 'Option 2' }, type: 1 },
-            ];
+            case"menu":{
+ const roleuser =   ( sender = process.env['Owner_nb']+'@s.whatsapp.net') && "Owner" || "User"
 
-            const buttonMessage = {
-                text: 'Choose an option:',
-                footer: 'Powered by WhatsApp Bot',
-                buttons,
-                headerType: 1,
-            };
-              const menu = `🚀 ALEXXA BOT MENU 🚀
-          👤 Bot Name: Alexxa
-          💬 Creator: Hansaka
+ const menu = `
 
-          📜 COMMANDS LIST
-          🔹 .hi - Say hello
-          🔹 .help - Get this menu
-          🔹 .ping - Check bot status
-          🔹 .time - Get current time
-          🔹 .weather <city> - Get weather info
-          🔹 .sticker - Convert image to sticker
-          🔹 .owner  - Chat with Owner
+╭━━━━━━━━━━━━━━━━━━━━━━━━━╮
+┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
+┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃
+┃🖥️ : ${cpuData}
+┃   𝐑𝐚𝐦 :${memUsed}  GB of , ${memTotal}
+┃
+┃    *Hello*, *${msg.pushName}* *${getGreeting()}*
+┃
+┃ *✧ʟɪᴍɪᴛ: *
+┃ *✧ʀᴏʟᴇ: ${roleuser}*
+┃ *✧ʟᴇᴠᴇʟ:* 
+┃ *✧ᴄᴀʟᴇɴᴅᴀʀ:* *${moment.tz('Asia/Colombo').format('dddd')}*, *${moment.tz('Asia/Colombo').format('MMMM Do YYYY')}* 
+┃ *✧ᴛɪᴍᴇ:* *${moment.tz('Asia/Colombo').format('HH:mm:ss')}*
+┃ 
+┃ 
+┃     *📜 COMMANDS LIST*
+┃  .help - Get this menu
+┃  .ping - Check bot status
+┃  .weather <city> - Get weather info
+┃  .sticker - Convert image to sticker
+┃  .owner  - Chat with Owner
+┃ 
+┃     ↣𝐘𝐨𝐮𝐭𝐮𝐛𝐞↢ 
+┃
+┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
+╰━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
-          🔒 Authority
 
-          🔹 Only Admins can use moderation commands
-          🔹 General users can use AI and fun commands
 `
 
                 AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/alexa.jpeg'},caption: menu},{ quoted: msg });
-                AlexaInc.readMessages([msg.key]);
-            break
+
+            break}
 
 
 
-case"ping":
+case"ping":{
 
 AlexaInc.sendMessage(msg.key.remoteJid,{text:'testing ping.......'},{ quoted: msg })
-AlexaInc.readMessages([msg.key]);
+
 const str = await runSpeedTest();
  const repmg = `
 Speed test results
@@ -227,51 +299,28 @@ Speed test results
 
  `
 AlexaInc.sendMessage(msg.key.remoteJid,{text:repmg},{ quoted: msg })
+  break}
+
+
+case"owner":{
+
+const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:Hansaka
+TEL;TYPE=celltype=VOICE;waid=94740970377:+94 74 0970 377
+TEL;TYPE=celltype=VOICE;waid=94763545014:+94 76 3545 014
+END:VCARD`;
+await AlexaInc.sendMessage(msg.key.remoteJid, { contacts: { 
+            displayName: 'Jeff', 
+            contacts: [{ vcard }]}}
+            );
+
   break
+}
 
-
-
-
-            }
-            // end command handle
-
-
-
-    }else{
-ai(messageText, sender, (err, reply) => {
-  if (err) {
-    console.error("Error:", err);
-  } else {    if (msg.key.remoteJid == 'status@broadcast') {
-
-    }else{
-    //console.log('Chatbot Response:', reply);
-    AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
-    AlexaInc.readMessages([msg.key]);}
-  }
-});
-        
-    }
-
-
-
-
-                
-
-
-                // const airm = await ai(messageText,sender)
-                // AlexaInc.sendMessage(msg.key.remoteJid,{text:`${airm}`});
-
-                // const sndr = sender;
-                // if (sndr!=='18002428478@s.whatsapp.net') {
-                //                     AlexaInc.sendMessage('18002428478@s.whatsapp.net',{text :`${messageText}`});
-                // }
-
-
-
-
-            } else if (msg.message?.imageMessage || msg.message?.videoMessage || msg.message?.documentMessage) {
-                console.log(`Received media from ${sender}, saving to temp folder...`);
-
+case"sticker":{
+              AlexaInc.sendMessage(msg.key.remoteJid,{text:'preparing your sticker'}, {quoted:msg});
+              AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '🔄', key: msg.key}})
                 try {
                     const messageType = Object.keys(msg.message)[0]; // "imageMessage", "videoMessage", etc.
                     const fileType = messageType.replace("Message", ""); // "image", "video", "document"
@@ -282,25 +331,100 @@ ai(messageText, sender, (err, reply) => {
                     }
 
                     // Generate a unique filename
-                    const fileName = `${Date.now()}_${fileType}.bin`; 
-                    const filePath = path.join(TEMP_DIR, fileName);
-
+                    const fileName = `${generateRandomToken(20,sender,msg.pushName)}`; 
+                    const filePath = path.join(TEMP_DIR, `${fileName}.jpeg`);
+                    console.log(`image saved${filePath}`)
                     // Save media to the temp folder
                     await fs.writeFile(filePath, mediaBuffer);
                     //console.log(`Media saved at: ${filePath}`);
 
                     // Upload media
-                    const upload= await fileutc(filePath, fileType);
-                    console.log(`Media uploaded: ${upload.secure_url}`); 
+    const imagePath = path.join(TEMP_DIR, `${fileName}.jpeg`); // Path to the image you want to send as a sticker
+    const stickerPath = path.join(TEMP_DIR, `${fileName}.webp`); // Path for the output sticker
+await convertToSticker(imagePath, stickerPath);
+const stickerBuffer = await fs.readFileSync(stickerPath);
 
+    const stickermessage = {
+        sticker: {
+            url: stickerPath,
+        },
+    };
+    await AlexaInc.sendMessage(msg.key.remoteJid, stickermessage);
+    AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}})
                     // Delete the file after upload
-                    await fs.unlink(filePath);
+                    await fs.unlink(imagePath);
+                    await fs.unlink(stickerPath);
                     //console.log(`Temporary file deleted: ${filePath}`);
 
                 } catch (error) {
+                  AlexaInc.sendMessage(msg.key.remoteJid, 'sorry sticker image fail');
+    AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '☹️', key: msg.key}})
                     console.error("Error processing media:", error);
                 }
+
+  break
+}
+
             }
+            // end command handle
+
+
+
+}else {
+ai(messageText, sender, (err, reply) => {
+  if (err) {
+    console.error("Error:", err);
+  } else {    
+    //console.log('Chatbot Response:', reply);
+    AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
+    AlexaInc.readMessages([msg.key]);
+  }
+});};
+
+              //console.log(msg);
+                console.log(chalk.red().bold(msg.pushName) +chalk.yellow().bold(`[${sender}]`)+ ': ' + chalk.blue().bold(messageText));
+
+// if (msg.message?.imageMessage || msg.message?.videoMessage || msg.message?.documentMessage) {
+//                 console.log(`Received media from ${sender}, saving to temp folder...`);
+
+//                 try {
+//                     const messageType = Object.keys(msg.message)[0]; // "imageMessage", "videoMessage", etc.
+//                     const fileType = messageType.replace("Message", ""); // "image", "video", "document"
+                    
+//                     const mediaBuffer = await downloadMediaMessage(msg, "buffer", {});
+//                     if (!mediaBuffer || mediaBuffer.length === 0) {
+//                         throw new Error("Media buffer is empty");
+//                     }
+
+//                     // Generate a unique filename
+//                     const fileName = `${generateRandomToken(20,sender,msg.pushName);}.jpeg`; 
+//                     const filePath = path.join(TEMP_DIR, fileName);
+
+//                     // Save media to the temp folder
+//                     await fs.writeFile(filePath, mediaBuffer);
+//                     //console.log(`Media saved at: ${filePath}`);
+
+//                     // Upload media
+//                     const upload= await fileutc(filePath, fileType);
+//                     console.log(`Media uploaded: ${upload.secure_url}`); 
+
+//                     // Delete the file after upload
+//                     await fs.unlink(filePath);
+//                     //console.log(`Temporary file deleted: ${filePath}`);
+
+//                 } catch (error) {
+//                     console.error("Error processing media:", error);
+//                 }
+//             }
+
+
+
+            
+
+
+
+
+    }
         }
     }
 }
