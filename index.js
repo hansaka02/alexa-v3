@@ -103,7 +103,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }
+    cookie: { secure: false, httpOnly: false, maxAge: 60 * 60 * 1000 }
 }));
 
 // API to get logs
@@ -116,6 +116,7 @@ app.post('/login', (req, res) => {
     const { username, password } = req.body;
     if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
         req.session.isLogged = true;
+        req.session.save();
         console.log(`Admin logged in: ${username}`);
         return res.json({ success: true });
     }
