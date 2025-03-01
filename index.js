@@ -15,7 +15,7 @@ const app = express();
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
-const PORT = 8000;
+const PORT = process.env.PORT || 3000;
 const si = require('systeminformation');
 
 app.use(express.static('public'));
@@ -134,6 +134,8 @@ function isAuthenticated(req, res, next) {
         return next();
     }
     res.status(401).json({ success: false, message: "Unauthorized" });
+    req.session.destroy(() => res.json({ success: true }));
+
 }
 
 // Route to check if user is logged in
