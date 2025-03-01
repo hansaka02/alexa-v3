@@ -133,8 +133,7 @@ function isAuthenticated(req, res, next) {
     if (req.session.isLogged) {
         return next();
     }
-    res.status(401).json({ success: false, message: "Unauthorized" });
-    req.session.destroy(() => res.json({ success: true }));
+    res.status(401).json({ success: false, message: "Unauthorized" })
 
 }
 
