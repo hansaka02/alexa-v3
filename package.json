@@ -15,6 +15,7 @@
         "axios": "^1.7.9",
         "baileys": "^6.7.13",
         "chalk": "^5.4.1",
+        "cheerio": "^1.0.0",
         "child_process": "^1.0.2",
         "chromedriver": "^133.0.2",
         "cloudinary": "^2.5.1",
@@ -26,6 +27,7 @@
         "formdata-node": "^6.0.3",
         "fs-extra": "^11.3.0",
         "kleur": "^4.1.5",
+        "moment-timezone": "^0.5.47",
         "mysql2": "^3.12.0",
         "node-fetch": "^3.3.2",
         "node-nlp": "^5.0.0-alpha.5",
@@ -35,6 +37,7 @@
         "puppeteer": "^24.3.0",
         "python-shell": "^5.0.0",
         "selenium-webdriver": "^4.29.0",
+        "sharp": "^0.32.6",
         "undici": "^7.3.0",
         "util": "^0.12.5"
     }
