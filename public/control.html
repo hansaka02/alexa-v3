@@ -239,27 +239,20 @@ margin-top: 100px;
     </div>
 </div>
     <script>
-        async function fetchLogs() {
-            try {
-                const response = await fetch('/get-console-logs');
-                const data = await response.json();
-
-                const logArea = document.getElementById('logArea');
-                logArea.innerHTML = ""; // Clear the log area
-
-                // Display each log entry
-                data.logs.forEach(log => {
-                    const logEntry = document.createElement('p');
-                    logEntry.classList.add('log-entry');
-                    logEntry.innerHTML = log; // Display HTML-styled log
-                    logArea.appendChild(logEntry);
-                    logArea.scrollTop = logArea.scrollHeight;
-                });
-            } catch (error) {
-                console.error("Failed to fetch logs:", error);
-            }
-        }
-       
+ const socketUrl = '${process.env.WEBSOCKET_URL}';  // Inject the WebSocket URL
+   const socket = new WebSocket(socketUrl);
+   socket.onmessage = function(event) {
+       const data = JSON.parse(event.data);
+       const logArea = document.getElementById('logArea');
+       logArea.innerHTML = "";
+       data.logs.forEach(log => {
+           const logEntry = document.createElement('p');
+           logEntry.classList.add('log-entry');
+           logEntry.innerHTML = log;
+           logArea.appendChild(logEntry);
+           logArea.scrollTop = logArea.scrollHeight;
+       });
+   };
         // Check if user is authenticated by calling /is-logged-in
         fetch('/is-logged-in')
             .then(response => response.json())
@@ -292,7 +285,7 @@ margin-top: 100px;
         }
 
         // Fetch logs every 5 seconds
-        setInterval(fetchLogs, 200);
+        
 
           // -----------------------------
     // 1) Helper functions for arcs (unchanged)

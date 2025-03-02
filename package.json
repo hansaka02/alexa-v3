@@ -27,6 +27,7 @@
         "form-data-encoder": "^4.0.2",
         "formdata-node": "^6.0.3",
         "fs-extra": "^11.3.0",
+        "http": "^0.0.1-security",
         "kleur": "^4.1.5",
         "moment-timezone": "^0.5.47",
         "mysql2": "^3.12.0",
@@ -38,9 +39,11 @@
         "pm2": "^5.4.3",
         "puppeteer": "^24.3.0",
         "python-shell": "^5.0.0",
+        "qrcode-terminal": "^0.12.0",
         "selenium-webdriver": "^4.29.0",
         "sharp": "^0.32.6",
         "undici": "^7.3.0",
-        "util": "^0.12.5"
+        "util": "^0.12.5",
+        "ws": "^8.18.1"
     }
 }

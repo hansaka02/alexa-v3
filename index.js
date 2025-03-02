@@ -37,6 +37,7 @@ const path = require('path');
 const msgRetryCounterCache = new NodeCache();
 const PORT = process.env.PORT || 8000;
 const si = require('systeminformation');
+const WebSocket = require('ws');
 const logger = P({
     timestamp: () => `,"time":"${new Date().toJSON()}"`
 }, P.destination('./wa-logs.txt'));
@@ -154,17 +155,14 @@ const CustomBrowsersMap = {
 
         const { connection, qr, isNewLogin } = update;
         if (qr) {
-            
             console.log("\n🔄 New QR code generated! Please scan it.\n");
-
             var qrcode = require('qrcode-terminal');
 console.log("\n📌 Scan this QR code with WhatsApp:\n");
 console.log(qr);
 qrcode.generate(qr, {small: true}, function (qrcode) {
     console.log(qrcode)
 });
-             
-        
+            
         }
         isConnected = connection === 'open';
 
@@ -298,10 +296,49 @@ app.get('/sysstats', async (req, res) => {
   }
 });
 
+
+const http = require('http')
+const server = http.createServer(app); // Create an HTTP server from Express
+const wss = new WebSocket.Server({ server }); // Attach WebSocket to the same server
+wss.on('connection', (ws) => {
+    //console.log('WebSocket Client Connected');
+
+    // Function to send latest logs
+    const sendLogs = () => {
+        const logFilePath = path.join(__dirname, 'logs/combined.log');
+
+        fs.readFile(logFilePath, 'utf8', (err, data) => {
+            if (err) {
+                console.error('Error reading logs:', err);
+                return;
+            }
+            const logs = data.split('\n').slice(-100); // Get last 100 log entries
+            ws.send(JSON.stringify({ logs }));
+        });
+    };
+
+    // Send logs every second
+    const logInterval = setInterval(sendLogs, 100);
+
+    // Handle WebSocket close
+    ws.on('close', () => {
+        console.log('WebSocket Client Disconnected');
+        clearInterval(logInterval);
+    });
+
+    // Send logs immediately after connection
+    sendLogs();
+});
+
+
+
+
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+
+
 // Function to delete logs directory
 const logsDir = path.join(__dirname, "logs");
 function deleteLogsDir() {
