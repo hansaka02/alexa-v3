@@ -1,11 +1,17 @@
 const { exec, spawn } = require("child_process");
 
 let processInstance;
+const logFile = "logs/combined.log"; // Define log file
 
 // Function to start index.js using PM2
 function startProcess() {
   console.log("Starting index.js using PM2...");
-  processInstance = spawn("pm2", ["start", "index.js", "--name", "alexaa-v3"], {
+  processInstance = spawn("pm2", [
+    "start", "index.js",
+    "--name", "alexaa-v3",
+    "--log", logFile, // Single log file for both stdout & stderr
+    "--merge-logs"
+  ], {
     stdio: "inherit",
   });
 
@@ -21,7 +27,7 @@ function startProcess() {
 // Function to restart index.js every hour
 function restartProcess() {
   console.log("Restarting index.js using PM2...");
-  exec("pm2 restart index.js", (error, stdout, stderr) => {
+  exec(`pm2 restart alexaa-v3 --log ${logFile} --merge-logs`, (error, stdout, stderr) => {
     if (error) {
       console.error(`Error restarting index.js: ${error.message}`);
       return;
