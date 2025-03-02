@@ -71,7 +71,7 @@ const db = mysql.createConnection({
   user: DB_UNAME,
   password: DB_PASS,
   database: DB_NAME,
-  port:27250
+  // port:27250
 });
 
 db.connect((err) => {
@@ -200,6 +200,7 @@ fs.ensureDirSync(TEMP_DIR);
 async function handleMessage(AlexaInc, { messages, type }) {
     if (type === 'notify') {
         const msg = messages[0];
+       // console.warn(messages[0])
 let sender = msg.key.remoteJid; // Default sender
 
 // Check if the message is from a group or a broadcast list
@@ -227,6 +228,8 @@ messageText = msg.message?.conversation ||
  //console.log(msg.message.messageContextInfo);
 
            if (messageText) {
+             console.log(chalk.red().bold(msg.pushName) +chalk.yellow().bold(`[${sender}]`)+ ': ' + chalk.blue().bold(messageText));
+
     // Check if the message has any text to process
     const firstWord = messageText.trim().split(/\s+/)[0].toLowerCase();
 
@@ -382,8 +385,7 @@ ai(messageText, sender, (err, reply) => {
 });};
 
               //console.log(msg);
-                console.log(chalk.red().bold(msg.pushName) +chalk.yellow().bold(`[${sender}]`)+ ': ' + chalk.blue().bold(messageText));
-
+               
 // if (msg.message?.imageMessage || msg.message?.videoMessage || msg.message?.documentMessage) {
 //                 console.log(`Received media from ${sender}, saving to temp folder...`);
 
