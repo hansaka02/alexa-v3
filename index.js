@@ -9,6 +9,7 @@ const {
     fetchLatestBaileysVersion,
     getAggregateVotesInPollMessage,
     getHistoryMsg,
+    Browsers,
     isJidNewsletter,
     makeCacheableSignalKeyStore,
     makeInMemoryStore,
