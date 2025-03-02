@@ -1,7 +1,21 @@
 const {
     makeWASocket,
+    AnyMessageContent,
+    BinaryInfo,
+    delay,
+    DisconnectReason,
+    downloadAndProcessHistorySyncNotification,
+    encodeWAM,
+    fetchLatestBaileysVersion,
+    getAggregateVotesInPollMessage,
+    getHistoryMsg,
+    isJidNewsletter,
+    makeCacheableSignalKeyStore,
+    makeInMemoryStore,
+    proto,
     useMultiFileAuthState,
-    proto
+    WAMessageContent,
+    WAMessageKey
 } = require('@whiskeysockets/baileys');
 const {
     handleMessage
@@ -11,12 +25,18 @@ const {
     default: P
 } = require("pino");
 const express = require('express');
+const NodeCache = require('node-cache');
 const app = express();
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
-const PORT = process.env.PORT || 3000;
+const msgRetryCounterCache = new NodeCache();
+const PORT = process.env.PORT || 8000;
 const si = require('systeminformation');
+const logger = P({
+    timestamp: () => `,"time":"${new Date().toJSON()}"`
+}, P.destination('./wa-logs.txt'));
+logger.level = 'fatal';
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -52,12 +72,29 @@ console.log("Server starting...");
         state,
         saveCreds
     } = await useMultiFileAuthState('auth');
+    const {
+        version,
+        isLatest
+    } = await fetchLatestBaileysVersion();
+    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+
     const AlexaInc = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
+        version,
         logger: P({
             level: "fatal"
-        })
+        }),
+        printQRInTerminal: true,
+        auth: {
+            creds: state.creds,
+            /** caching makes the store faster to send/recv messages */
+            keys: makeCacheableSignalKeyStore(state.keys, logger),
+        },
+        msgRetryCounterCache,
+        generateHighQualityLinkPreview: true,
+        // ignore all broadcast messages -- to receive the same
+        // comment the line below out
+        // shouldIgnoreJid: jid => isJidBroadcast(jid),
+        // implement to handle retries & poll updates
     });
 
     AlexaInc.ev.on('creds.update', saveCreds);
@@ -106,10 +143,18 @@ app.use(session({
     cookie: { secure: false, httpOnly: false, maxAge: 60 * 60 * 1000 }
 }));
 
-// API to get logs
 app.get('/get-console-logs', (req, res) => {
-    res.json({ logs: consoleLogs });
+    const logFilePath = path.join(__dirname, 'logs/combined.log');
+    
+    // Read the latest logs
+    fs.readFile(logFilePath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ error: 'Error reading logs' });
+        }
+        res.json({ logs: data.split('\n').slice(-100) }); // Send last 100 logs
+    });
 });
+
 
 // Login and logout APIs
 app.post('/login', (req, res) => {
