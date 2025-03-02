@@ -154,9 +154,17 @@ const CustomBrowsersMap = {
 
         const { connection, qr, isNewLogin } = update;
         if (qr) {
+            
             console.log("\n🔄 New QR code generated! Please scan it.\n");
-             console.log("\n📌 Scan this QR code with WhatsApp:\n");
-        console.log(qr);
+
+            var qrcode = require('qrcode-terminal');
+console.log("\n📌 Scan this QR code with WhatsApp:\n");
+console.log(qr);
+qrcode.generate(qr, {small: true}, function (qrcode) {
+    console.log(qrcode)
+});
+             
+        
         }
         isConnected = connection === 'open';
 
