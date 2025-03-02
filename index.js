@@ -9,8 +9,8 @@ const {
     fetchLatestBaileysVersion,
     getAggregateVotesInPollMessage,
     getHistoryMsg,
-    Browsers,
     isJidNewsletter,
+    Browsers,
     makeCacheableSignalKeyStore,
     makeInMemoryStore,
     proto,
@@ -18,6 +18,8 @@ const {
     WAMessageContent,
     WAMessageKey
 } = require('@whiskeysockets/baileys');
+let isNewLogin = null;
+const baileys = require('@whiskeysockets/baileys')
 const {
     handleMessage
 } = require('./bot'); // Import message handler
@@ -31,6 +33,7 @@ const app = express();
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
+
 const msgRetryCounterCache = new NodeCache();
 const PORT = process.env.PORT || 8000;
 const si = require('systeminformation');
@@ -68,22 +71,47 @@ console.log = (...args) => {
 // Log initialization
 console.log("Server starting...");
 
-(async () => {
+async function startWhatsAppConnection ()  {
     const {
         state,
         saveCreds
-    } = await useMultiFileAuthState('auth');
+    } = await useMultiFileAuthState('auth5a');
     const {
         version,
         isLatest
     } = await fetchLatestBaileysVersion();
     console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
 
+
+const APP_NAME = 'Alexa'; // Your app name
+const ORGANIZATION_NAME = 'AlexaInc'; // Your organization's name
+const APP_VERSION = '3.0.0'; // Your app version
+
+const CustomBrowsersMap = {
+    ...Browsers, // Spread the original BrowsersMap to keep existing functionality
+
+    // Override the appropriate method
+    appropriate: (browser) => {
+        // Use custom values for your app, organization, and version
+        if (process.platform === 'linux') {
+            return [ORGANIZATION_NAME, APP_NAME,  APP_VERSION];
+        } else if (process.platform === 'darwin') {
+            return [ORGANIZATION_NAME, APP_NAME, APP_VERSION];
+        } else if (process.platform === 'win32') {
+            return [ORGANIZATION_NAME, APP_NAME, APP_VERSION];
+        } else {
+            return [ORGANIZATION_NAME, APP_NAME, APP_VERSION]; // Default for unknown platform
+        }
+    }
+};
+
+
     const AlexaInc = makeWASocket({
         version,
         logger: P({
             level: "fatal"
         }),
+        browser: CustomBrowsersMap.appropriate('Alexa'),
         printQRInTerminal: true,
         auth: {
             creds: state.creds,
@@ -97,30 +125,18 @@ console.log("Server starting...");
         // shouldIgnoreJid: jid => isJidBroadcast(jid),
         // implement to handle retries & poll updates
     });
-
+    AlexaInc.ev.on('qr',(qr)=>{
+        console.log("\n📌 Scan this QR code with WhatsApp:\n");
+        console.log(qr);
+    })
     AlexaInc.ev.on('creds.update', saveCreds);
     AlexaInc.ev.on('messages.upsert', (m) => handleMessage(AlexaInc, m)); // Call bot.js function
 
     let isConnected = false;
 
     AlexaInc.ev.on('connection.update', (update) => {
-        const { connection } = update;
-        isConnected = connection === 'open';
-        if (connection === 'open') {
-            console.log(AlexaInc.user.id);
-            botPhoneNumber = AlexaInc.user.id.split(':')[0];
-            const ownerNumber = process.env["Owner_nb"];
-            if (ownerNumber) {
-                AlexaInc.sendMessage(`${ownerNumber}@s.whatsapp.net`, {
-                    text: 'Your bot Alexa is ready to use now'
-                })
-                    .then(() => console.log('Bot started without error'))
-                    .catch(err => console.error('Error sending message to owner:', err));
-            } else {
-                console.error('Error: Owner phone number not found');
-            }
-        }
-    });
+
+ const app = express();
 
     app.get('/status', (req, res) => {
         res.json({ status: "Online" });
@@ -134,7 +150,43 @@ console.log("Server starting...");
         }
     });
 
-})();
+
+
+        const { connection, qr, isNewLogin } = update;
+        if (qr) {
+            console.log("\n🔄 New QR code generated! Please scan it.\n");
+        }
+        isConnected = connection === 'open';
+
+        if (connection === 'open') {
+
+
+            console.log(AlexaInc.user.id);
+            botPhoneNumber = AlexaInc.user.id.split(':')[0];
+            const ownerNumber = process.env["Owner_nb"];
+            if (ownerNumber) {
+                AlexaInc.sendMessage(`${ownerNumber}@s.whatsapp.net`, {
+                    text: 'Your bot Alexa is ready to use now'
+                })
+                    .then(() => console.log('Bot started without error'))
+                    .catch(err => console.error('Error sending message to owner:', err));
+            } else {
+                console.error('Error: Owner phone number not found');
+            }
+        }
+
+                if (isNewLogin) {
+            console.log("🔄 Restarting connection after QR scan...");
+            setTimeout(startWhatsAppConnection, 2000); // Restart after 2 sec
+        }
+    });
+
+
+
+
+//await AlexaInc.start();
+}
+startWhatsAppConnection();
 
 // Setup session middleware
 app.use(session({
@@ -144,7 +196,7 @@ app.use(session({
     cookie: { secure: false, httpOnly: false, maxAge: 60 * 60 * 1000 }
 }));
 
-app.get('/get-console-logs', (req, res) => {
+app.get('/get-console-logs', isAuthenticated, (req, res) => {
     const logFilePath = path.join(__dirname, 'logs/combined.log');
     
     // Read the latest logs
@@ -179,8 +231,12 @@ app.post('/logout', (req, res) => {
 function isAuthenticated(req, res, next) {
     if (req.session.isLogged) {
         return next();
-    }
-    res.status(401).json({ success: false, message: "Unauthorized" })
+    } else if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        } else {
+            return res.redirect('/login'); // Redirect non-API users to the login page
+        }
+
    // res.sendFile(path.join(__dirname, 'public', 'login.html'));
 
 }
@@ -236,3 +292,30 @@ app.get('/sysstats', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
+// Function to delete logs directory
+const logsDir = path.join(__dirname, "logs");
+function deleteLogsDir() {
+    if (fs.existsSync(logsDir)) {
+        fs.rmSync(logsDir, { recursive: true, force: true });
+        console.log("🗑️ Logs directory deleted.");
+    }
+}
+
+// Listen for process exit signals
+process.on("exit", deleteLogsDir);          // Normal exit
+process.on("SIGINT", () => {                // Ctrl + C
+    console.log("\n⚠️ Process interrupted (SIGINT)");
+    deleteLogsDir();
+    process.exit(0);
+});
+process.on("SIGTERM", () => {               // Kill command
+    console.log("\n⚠️ Process terminated (SIGTERM)");
+    deleteLogsDir();
+    process.exit(0);
+});
+process.on("uncaughtException", (err) => {  // Unhandled error
+    console.error("❌ Uncaught Exception:", err);
+    deleteLogsDir();
+    process.exit(1);
+});
+process.on("beforeExit", deleteLogsDir);    // Just before exit

@@ -71,7 +71,7 @@ const db = mysql.createConnection({
   user: DB_UNAME,
   password: DB_PASS,
   database: DB_NAME,
-  port:27250
+  // port:27250
 });
 
 db.connect((err) => {
@@ -366,6 +366,14 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
                 }
 
   break
+}
+default :{
+  const rep = `
+    Invalid Command used 
+    to view command list send .menu or /menu
+  `
+  AlexaInc.sendMessage(msg.key.remoteJid, {text:rep}, {quoted: msg});
+  AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '☹️', key: msg.key}})
 }
 
             }
