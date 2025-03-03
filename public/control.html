@@ -49,10 +49,18 @@
 .login-button:hover {
     background-color: #e0e0e0;
 }
-
+        #tabs {
+            margin: 50px 0;
+            margin-left: 30px;
+        }
+        #tabs button {
+            padding: 10px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
 
         /* Content Styles */
-        #logArea {
+        .logArea {
             box-sizing: content-box;
             border-color: black;
             width: 100%;
@@ -64,9 +72,9 @@
             background-color: black;
             border: 1px solid #ddd;
             padding: 10px;
-            margin-top: 50px; /* To make space for the navbar */
+            margin-top: 30px; /* To make space for the navbar */
         }
-        #logArea p{
+        .logArea p{
           color: white;
           margin: 0;
         }
@@ -230,29 +238,61 @@
     </div>
 
   </div>
-<div style="
+        <div style="margin-top: 100px;">
+            <h1>System logs</h1>
 
-margin-top: 100px;
-">
-    <h1>Systerm logs</h1>
-    <div id="logArea"></div>
+    <div id="tabs">
+        <button id="indexLogTab" onclick="switchLogTab('index')">Index Logs</button>
+        <button id="serverLogTab" onclick="switchLogTab('server')">Server Logs</button>
     </div>
+
+    <div id="indexLogArea" class="logArea" style="display: none;"></div>
+    <div id="serverLogArea" class="logArea" style="display: none;"></div>
+
+        </div>
 </div>
     <script>
- const socketUrl = '${process.env.WEBSOCKET_URL}';  // Inject the WebSocket URL
-   const socket = new WebSocket(socketUrl);
-   socket.onmessage = function(event) {
-       const data = JSON.parse(event.data);
-       const logArea = document.getElementById('logArea');
-       logArea.innerHTML = "";
-       data.logs.forEach(log => {
-           const logEntry = document.createElement('p');
-           logEntry.classList.add('log-entry');
-           logEntry.innerHTML = log;
-           logArea.appendChild(logEntry);
-           logArea.scrollTop = logArea.scrollHeight;
-       });
-   };
+        const socketUrl = 'ws://' + window.location.host; // WebSocket URL for the current host
+        const socket = new WebSocket(socketUrl);
+
+        // Handle incoming messages from the WebSocket server
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const logArea = data.type === 'index' ? document.getElementById('indexLogArea') : document.getElementById('serverLogArea');
+            
+            logArea.innerHTML = ""; // Clear previous logs
+
+            data.logs.forEach(log => {
+                const logEntry = document.createElement('p');
+                logEntry.innerText = log;
+                logArea.appendChild(logEntry);
+            });
+
+            logArea.scrollTop = logArea.scrollHeight; // Auto-scroll to the latest log
+        };
+
+        // Switch between logs
+        function switchLogTab(logType) {
+            const indexTab = document.getElementById('indexLogTab');
+            const serverTab = document.getElementById('serverLogTab');
+            const indexLogArea = document.getElementById('indexLogArea');
+            const serverLogArea = document.getElementById('serverLogArea');
+
+            if (logType === 'index') {
+                indexTab.style.backgroundColor = 'lightblue';
+                serverTab.style.backgroundColor = '';
+                indexLogArea.style.display = 'block';
+                serverLogArea.style.display = 'none';
+            } else {
+                serverTab.style.backgroundColor = 'lightblue';
+                indexTab.style.backgroundColor = '';
+                serverLogArea.style.display = 'block';
+                indexLogArea.style.display = 'none';
+            }
+        }
+
+        // Default to showing index logs
+        switchLogTab('index');
         // Check if user is authenticated by calling /is-logged-in
         fetch('/is-logged-in')
             .then(response => response.json())
