@@ -252,7 +252,7 @@
         </div>
 </div>
     <script>
-        const socketUrl = 'ws://' + window.location.host; // WebSocket URL for the current host
+        const socketUrl = '${process.env.WEBSOCKET_URL}'; // WebSocket URL for the current host
         const socket = new WebSocket(socketUrl);
 
         // Handle incoming messages from the WebSocket server
