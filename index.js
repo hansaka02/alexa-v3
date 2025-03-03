@@ -10,6 +10,7 @@ const {
     getAggregateVotesInPollMessage,
     getHistoryMsg,
     isJidNewsletter,
+    isJidBroadcast,
     Browsers,
     makeCacheableSignalKeyStore,
     makeInMemoryStore,
@@ -117,7 +118,7 @@ const CustomBrowsersMap = {
         generateHighQualityLinkPreview: true,
         // ignore all broadcast messages -- to receive the same
         // comment the line below out
-        // shouldIgnoreJid: jid => isJidBroadcast(jid),
+        shouldIgnoreJid: jid => isJidBroadcast(jid),
         // implement to handle retries & poll updates
     });
     AlexaInc.ev.on('qr',(qr)=>{

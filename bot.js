@@ -150,7 +150,7 @@ function ai(message, thread_id, callback) {
     }
 
     let conversations = [];
-
+// 
     if (results.length > 0) {
       try {
         const abc =  results[0].conventions
@@ -170,7 +170,7 @@ function ai(message, thread_id, callback) {
     }
 
     // Add user message
-const systemHeader = {
+let systemHeader = {
   role: "system",
   content: `*I am Alexxa, a WhatsApp chatbot created by Hansaka.*\n\n` +
            `➤ When a user asks for the weather, reply with: \`\`\`weather {city}\`\`\`\n\n` +
@@ -185,19 +185,20 @@ const systemHeader = {
 };
 
 
-    conversations.push(systemHeader);
-    conversations.push({ role: "user", content: message });
-
+    //conversations.push(systemHeader);
+     conversations.push({ role: "user", content: message });
+    let aipostmg = [systemHeader, ...conversations];
+//console.log(aipostmg);
     // Retry function for OpenRouter API call
     function callAPIWithRetry(retries = 5) {
       return new Promise((resolve, reject) => {
         function attempt(remainingRetries) {
           client.chat.completions.create({
-            messages: conversations,
+            messages: aipostmg ,
             model: "google/gemini-2.0-flash-thinking-exp:free",
             user: thread_id,
             temperature: 1,
-            max_tokens: 2048, // Reduced max tokens to avoid overloading
+            max_tokens: 1500, // Reduced max tokens to avoid overloading
             top_p: 1
           }).then(response => {
             if (!response || !response.choices || response.choices.length === 0) {
@@ -561,6 +562,7 @@ default :{
 
 /*****************   ai function for  language process  *****************/
 ai(messageText, sender, async (err, reply) => {
+  AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '🔄', key: msg.key}});
   if (err) {
     console.error("Error:", err);
   } else {    
@@ -680,6 +682,7 @@ ${summary}
 
     default:{
           AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
+          AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}});
     AlexaInc.readMessages([msg.key]);
     }
     }
