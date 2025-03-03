@@ -1,4 +1,5 @@
 const fs = require('fs-extra');
+const{weatherof} = require('./res/js/weather.js')
 const path = require('path');
 const si = require('os');
 const axios = require('axios');
@@ -25,7 +26,53 @@ const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
 const {isUrl} = require('./res/js/func')
+function generateWeatherSummary(temperature, windspeed, winddirection) {
+    // Define the temperature description
+    let temperatureDesc;
+    if (temperature < 0) {
+        temperatureDesc = "It's freezing cold!";
+    } else if (temperature >= 0 && temperature <= 15) {
+        temperatureDesc = "It's chilly.";
+    } else if (temperature > 15 && temperature <= 25) {
+        temperatureDesc = "The weather is mild.";
+    } else if (temperature > 25 && temperature <= 35) {
+        temperatureDesc = "It's quite warm.";
+    } else {
+        temperatureDesc = "It's hot outside!";
+    }
 
+    // Define the wind description
+    let windDesc;
+    if (windspeed < 10) {
+        windDesc = "There's a light breeze.";
+    } else if (windspeed >= 10 && windspeed <= 30) {
+        windDesc = "The wind is moderate.";
+    } else {
+        windDesc = "It's very windy!";
+    }
+
+    // Define the wind direction description
+    let windDirectionDesc;
+    if (winddirection >= 0 && winddirection <= 45) {
+        windDirectionDesc = "The wind is coming from the north-east.";
+    } else if (winddirection > 45 && winddirection <= 135) {
+        windDirectionDesc = "The wind is coming from the east.";
+    } else if (winddirection > 135 && winddirection <= 225) {
+        windDirectionDesc = "The wind is coming from the south-east.";
+    } else if (winddirection > 225 && winddirection <= 315) {
+        windDirectionDesc = "The wind is coming from the south-west.";
+    } else {
+        windDirectionDesc = "The wind is coming from the west.";
+    }
+
+    // Combine all parts into a final summary
+    const weatherSummary = `*Weather* *Summary:*
+*-* *Temperature:* *${temperature}°C (${temperatureDesc})*
+*-* *Wind Speed:* *${windspeed}* *km/h* *(${windDesc})*
+*-* *Wind* *Direction:* *${windDirectionDesc}* *(Direction:* *${winddirection}°)*`;
+
+    return weatherSummary;
+}
 
 
 async function convertToSticker(imagePath, stickerPath) {
@@ -78,7 +125,7 @@ const db = mysql.createConnection({
   user: DB_UNAME,
   password: DB_PASS,
   database: DB_NAME,
-  port:27250
+  // port:27250
 });
 
 db.connect((err) => {
@@ -103,7 +150,10 @@ function ai(message, thread_id, callback) {
     }
 
     let conversations = [];
-
+    const systermhead = `{
+  "role": "system",
+  "content": "I am Alexxa, a WhatsApp chatbot created by Hansaka. When a user asks for the weather, reply with 'weather {city}' only. When a user asks for a menu, reply with 'menu' only. When a user asks for ping or system status, reply with 'ping' only. When a user asks for documentation, reply with 'please contact owner using <generative text> and to contact owner please use command .owner'."
+}`;
     if (results.length > 0) {
       try {
         const abc =  results[0].conventions
@@ -118,11 +168,17 @@ function ai(message, thread_id, callback) {
       }
     } else {
       conversations = [
-        { role: "system", content: "I am Alexxa, a WhatsApp chatbot created by Hansaka." }
+        
       ];
     }
 
     // Add user message
+const systemHeader = {
+  role: "system",
+  content: "I am Alexxa, a WhatsApp chatbot created by Hansaka. When a user asks for the weather, reply with 'weather {city}' only. When a user asks for a menu, reply with 'menu' only. When a user asks for ping or system status, reply with 'ping' only. When a user asks for documentation, reply with 'please contact owner to contact owner please use command .owner'."
+};
+
+    conversations.push(systemHeader);
     conversations.push({ role: "user", content: message });
 
     // Retry function for OpenRouter API call
@@ -131,7 +187,7 @@ function ai(message, thread_id, callback) {
         function attempt(remainingRetries) {
           client.chat.completions.create({
             messages: conversations,
-            model: "mistralai/mistral-small-24b-instruct-2501:free",
+            model: "google/gemini-2.0-flash-thinking-exp:free",
             user: thread_id,
             temperature: 1,
             max_tokens: 2048, // Reduced max tokens to avoid overloading
@@ -222,10 +278,10 @@ async function handleMessage(AlexaInc, { messages, type }) {
         const msg = messages[0];
        // console.warn(messages[0])
 let sender = msg.key.remoteJid; // Default sender
-
+const senderdef = msg.key.remoteJid;
 // Check if the message is from a group or a broadcast list
 if (sender.endsWith('@g.us') || sender.endsWith('@broadcast')) {
-    sender = msg.key.participant; // Assign participant ID instead
+    sender = `${msg.key.participant}@${senderdef}`; // Assign participant ID instead
 }
 
         if (!msg.key.fromMe) {
@@ -442,28 +498,43 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
 //   break
 // }
 
-// case 'medeafire' :{
+case 'weather': {
+    if (!text) {
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Please enter city after command' }, { quoted: msg });
+    }
+    try {
+        // Await the weather data
+        const fetchmg = await weatherof(args);
+        const summary = generateWeatherSummary(fetchmg.temperature, fetchmg.windspeed, fetchmg.winddirection);
+        // Check if the city is invalid
+        if (fetchmg === 'invalid city') {
+            // If the city is invalid, send a message back saying "invalid city"
+            AlexaInc.sendMessage(msg.key.remoteJid, { 
+                text: 'Invalid city name. Please recheck the city name and try again.' 
+            }, { quoted: msg });
+        } else {
+            // If the city is valid, send the weather information
+            const repmsg = `
+*City* *-* *${args}*
+*Time* *-* *${moment.tz('Asia/Colombo').format('HH:mm')}* *UTC* *+5.30*
+${summary}
+  `;
+        
+            // Send the weather information to the user
+            AlexaInc.sendMessage(msg.key.remoteJid, {
+                image: { url: './res/img/unnamed.jpeg' },
+                caption: repmsg
+            }, { quoted: msg });
+        }
+    } catch (error) {
+        // Handle errors
+        console.error(error);  // Log the error for debugging
+        AlexaInc.sendMessage(msg.key.remoteJid, { react: { text: '☹️', key: msg.key } });
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: error.message || error }, { quoted: msg });
+    }
+    break;
+}
 
-// if (!text) throw '*Enter a Link Query!*'
-// if (!isUrl(args[0]) && !args[0].includes('mediafire.com')) throw '*The link you provided is not valid*'
-// const baby1 = await mediafireDl(text);
-// console.log(baby1);
-// //if (baby1[0].size.split('MB')[0] >= 5000) return AlexaInc.sendMessage(msg.key.remoteJid,{text:`*file over.limit* ${util.format(baby1)} `});
-// // const result4 = `*▊▊▊MEDIAFIRE DL▊▊▊*
-                
-// // *Name* : ${baby1[0].nama}
-// // *Size* : ${baby1[0].size}
-// // *Mime* : ${baby1[0].mime}
-// // *Link* : ${baby1 [0].link}\n
-// // _whoa wait alexa is processing..._
-
-// // *🎀 𝒜𝐿𝐸𝒳𝒜 🎀*`
-// // AlexaInc.sendMessage(msg.key.remoteJid, {text: result4} , {quoted:msg});
-// // AlexaInc.sendMessage(msg.key.remoteJid, { document : { url : baby1[0].link}, fileName : baby1[0].nama, mimetype: baby1[0].mime }, { quoted : m }).catch ((err) => m.reply('*Failed to download File*'))
-
-
-//   break
-// }
 
 default :{
   const rep = `
@@ -480,13 +551,133 @@ default :{
 
 
 }else {
-ai(messageText, sender, (err, reply) => {
+
+/*****************   ai function for  language process  *****************/
+ai(messageText, sender, async (err, reply) => {
   if (err) {
     console.error("Error:", err);
   } else {    
-    //console.log('Chatbot Response:', reply);
-    AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
+    let prosseseb = reply.trim().split(/\s+/)[0].toLowerCase(); // Assign as command
+        const bargs = reply.trim().split(/ +/).slice(1);
+        const btext  = bargs.join(" ")
+    const cpuData = await si.cpus()[0].model;
+const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
+const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
+    switch(prosseseb){
+
+case 'menu':{
+
+ const roleuser =   ( sender = process.env['Owner_nb']+'@s.whatsapp.net') && "Owner" || "User"
+
+ const menu = `
+
+╭━━━━━━━━━━━━━━━━━━━━━━━━━╮
+┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
+┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃
+┃🖥️ : ${cpuData}
+┃   𝐑𝐚𝐦 :${memUsed}  GB of , ${memTotal}
+┃
+┃    *Hello*, *${msg.pushName}* *${getGreeting()}*
+┃
+┃ *✧ʟɪᴍɪᴛ: *
+┃ *✧ʀᴏʟᴇ: ${roleuser}*
+┃ *✧ʟᴇᴠᴇʟ:* 
+┃ *✧ᴄᴀʟᴇɴᴅᴀʀ:* *${moment.tz('Asia/Colombo').format('dddd')}*, *${moment.tz('Asia/Colombo').format('MMMM Do YYYY')}* 
+┃ *✧ᴛɪᴍᴇ:* *${moment.tz('Asia/Colombo').format('HH:mm:ss')}*
+┃ 
+┃ 
+┃     *📜 COMMANDS LIST*
+┃  .help - Get this menu
+┃  .ping - Check bot status
+┃  .weather <city> - Get weather info
+┃  .sticker - Convert image to sticker
+┃  .owner  - Chat with Owner
+┃ 
+┃     ↣𝐘𝐨𝐮𝐭𝐮𝐛𝐞↢ 
+┃
+┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
+╰━━━━━━━━━━━━━━━━━━━━━━━━━╯
+
+
+`
+
+                AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/alexa.jpeg'},caption: menu},{ quoted: msg });
+
+  break
+}
+
+case 'ping':{
+
+
+
+AlexaInc.sendMessage(msg.key.remoteJid,{text:'testing ping.......'},{ quoted: msg })
+
+const str = await runSpeedTest();
+ const repmg = `
+Speed test results
+  🛜 : ${str.ping}
+  ⬇ :${str.download_speed}
+  ⬆ :${str.upload_speed}  
+
+ `
+AlexaInc.sendMessage(msg.key.remoteJid,{text:repmg},{ quoted: msg })
+
+  break
+}
+
+
+case 'weather' :{
+
+
+
+    if (!btext) {
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Please enter city after command' }, { quoted: msg });
+    }
+    try {
+        // Await the weather data
+        const fetchmg = await weatherof(bargs);
+        const summary = generateWeatherSummary(fetchmg.temperature, fetchmg.windspeed, fetchmg.winddirection);
+        // Check if the city is invalid
+        if (fetchmg === 'invalid city') {
+            // If the city is invalid, send a message back saying "invalid city"
+            AlexaInc.sendMessage(msg.key.remoteJid, { 
+                text: 'Invalid city name. Please recheck the city name and try again.' 
+            }, { quoted: msg });
+        } else {
+            // If the city is valid, send the weather information
+            const repmsg = `
+*City* *-* *${bargs}*
+*Time* *-* *${moment.tz('Asia/Colombo').format('HH:mm')}* *UTC* *+5.30*
+${summary}
+  `;
+        
+            // Send the weather information to the user
+            AlexaInc.sendMessage(msg.key.remoteJid, {
+                image: { url: './res/img/unnamed.jpeg' },
+                caption: repmsg
+            }, { quoted: msg });
+        }
+    } catch (error) {
+        // Handle errors
+        console.error(error);  // Log the error for debugging
+        AlexaInc.sendMessage(msg.key.remoteJid, { react: { text: '☹️', key: msg.key } });
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: error.message || error }, { quoted: msg });
+    }
+    break;
+
+}
+
+
+    default:{
+          AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
     AlexaInc.readMessages([msg.key]);
+    }
+    }
+    //console.log('Chatbot Response:', reply);
+
   }
 });};
 
