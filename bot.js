@@ -3,11 +3,14 @@ const path = require('path');
 const si = require('os');
 const axios = require('axios');
 const sharp = require('sharp');
-const { downloadMediaMessage, proto } = require('@whiskeysockets/baileys');
+const { downloadMediaMessage, proto, prepareWAMessageMedia , generateWAMessageFromContent} = require('@whiskeysockets/baileys');
+//const {generateWAMessageFromContent} = require('@adiwajshing/baileys')
 //const { Button, ButtonMessage } = require('@whiskeysockets/baileys').WA_MESSAGE_TYPE;
 const { fileutc } = require('./res/js/fu.js');
 const {runSpeedTest} = require('./res/js/speed_test.js')
 const FormData = require('form-data');
+
+
 const chalk = require('kleur');
 const TEMP_DIR = path.join(__dirname, 'temp');
 //const {ai} = require('./ai')
@@ -15,11 +18,15 @@ const { OpenAI } = require("openai");
 require('dotenv').config();
 const mysql = require("mysql2");
 const token = process.env["OPENROUTER_TOKEN"];
+const { mediafireDl } = require('./res/mediafire.js')
 
 const DB_HOST = process.env["DB_HOST"];
 const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
+const {isUrl} = require('./res/js/func')
+
+
 
 async function convertToSticker(imagePath, stickerPath) {
     await sharp(imagePath)
@@ -71,7 +78,7 @@ const db = mysql.createConnection({
   user: DB_UNAME,
   password: DB_PASS,
   database: DB_NAME,
-port:27250
+  // port:27250
 });
 
 db.connect((err) => {
@@ -198,6 +205,19 @@ function ai(message, thread_id, callback) {
 fs.ensureDirSync(TEMP_DIR);
 
 async function handleMessage(AlexaInc, { messages, type }) {
+
+     AlexaInc.sendListMsg = (jid, text = '', footer = '', title = '' , butText = '', sects = [], quoted) => {
+        let sections = sects
+        var listMes = {
+        text: text,
+        footer: footer,
+        title: title,
+        buttonText: butText,
+        sections
+        }
+        AlexaInc.sendMessage(jid, listMes, { quoted: quoted })
+        }                  
+      
     if (type === 'notify') {
         const msg = messages[0];
        // console.warn(messages[0])
@@ -224,7 +244,9 @@ messageText = msg.message?.conversation ||
   const messageonlyText = msg.message?.conversation ||
               msg.message?.extendedTextMessage?.text
 
-
+        const args = messageText.trim().split(/ +/).slice(1);
+        const text = q = args.join(" ")
+       // console.log(args)
  //console.log(msg.message.messageContextInfo);
 
            if (messageText) {
@@ -367,6 +389,82 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
 
   break
 }
+
+
+// case 'test':{
+
+// //let sender = msg.key.remoteJid; // The recipient's JID
+
+// let sections = [
+//     {
+//         title: "Choose an Option", // Section Title
+//         rows: [
+//             {
+//                 title: "📥 Download MP3",
+//                 rowId: "#download_mp3",
+//                 description: "Download audio file"
+//             },
+//             {
+//                 title: "📥 Download MP4",
+//                 rowId: "#download_mp4",
+//                 description: "Download video file"
+//             },
+//             {
+//                 title: "🔎 Search YouTube",
+//                 rowId: "#ytsearch",
+//                 description: "Search for YouTube videos"
+//             },
+//             {
+//                 title: "🎵 Get Song Lyrics",
+//                 rowId: "#lyrics",
+//                 description: "Find lyrics of any song"
+//             },
+//             {
+//                 title: "📌 Help & Commands",
+//                 rowId: "#help",
+//                 description: "Get a list of available commands"
+//             }
+//         ]
+//     }
+// ];
+
+// // Sending the list message
+// AlexaInc.sendListMsg(
+//     msg.key.remoteJid, 
+//     "Please select an option from the list below:",  // Main text
+//     "Bot Assistant",  // Footer text
+//     "Available Features", // Title
+//     "Click to Choose", // Button text
+//     sections, 
+//     msg // Quoted message (optional)
+// );
+
+//   break
+// }
+
+// case 'medeafire' :{
+
+// if (!text) throw '*Enter a Link Query!*'
+// if (!isUrl(args[0]) && !args[0].includes('mediafire.com')) throw '*The link you provided is not valid*'
+// const baby1 = await mediafireDl(text);
+// console.log(baby1);
+// //if (baby1[0].size.split('MB')[0] >= 5000) return AlexaInc.sendMessage(msg.key.remoteJid,{text:`*file over.limit* ${util.format(baby1)} `});
+// // const result4 = `*▊▊▊MEDIAFIRE DL▊▊▊*
+                
+// // *Name* : ${baby1[0].nama}
+// // *Size* : ${baby1[0].size}
+// // *Mime* : ${baby1[0].mime}
+// // *Link* : ${baby1 [0].link}\n
+// // _whoa wait alexa is processing..._
+
+// // *🎀 𝒜𝐿𝐸𝒳𝒜 🎀*`
+// // AlexaInc.sendMessage(msg.key.remoteJid, {text: result4} , {quoted:msg});
+// // AlexaInc.sendMessage(msg.key.remoteJid, { document : { url : baby1[0].link}, fileName : baby1[0].nama, mimetype: baby1[0].mime }, { quoted : m }).catch ((err) => m.reply('*Failed to download File*'))
+
+
+//   break
+// }
+
 default :{
   const rep = `
     Invalid Command used 
