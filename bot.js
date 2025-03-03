@@ -195,7 +195,7 @@ let systemHeader = {
         function attempt(remainingRetries) {
           client.chat.completions.create({
             messages: aipostmg ,
-            model: "google/gemini-2.0-flash-thinking-exp:free",
+            model: process.env.CHAT_MODEL,
             user: thread_id,
             temperature: 1,
             max_tokens: 1500, // Reduced max tokens to avoid overloading
