@@ -18,8 +18,13 @@ const {
     WAMessageContent,
     WAMessageKey
 } = require('@whiskeysockets/baileys');
+//const art = require('ascii-art');
 let isNewLogin = null;
+//const app = require('./server');
 const baileys = require('@whiskeysockets/baileys')
+
+
+require('./whatsappState'); // Import shared state
 const {
     handleMessage
 } = require('./bot'); // Import message handler
@@ -29,50 +34,39 @@ const {
 } = require("pino");
 const express = require('express');
 const NodeCache = require('node-cache');
-const app = express();
+
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
 
 const msgRetryCounterCache = new NodeCache();
 const PORT = process.env.PORT || 8000;
+const dataFile = path.join(__dirname, 'sharedData.json');
 const si = require('systeminformation');
 const WebSocket = require('ws');
 const logger = P({
     timestamp: () => `,"time":"${new Date().toJSON()}"`
 }, P.destination('./wa-logs.txt'));
-logger.level = 'fatal';
+logger.level = 'debug';
 
-app.use(express.static('public'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Store logs in an array, now also keeping HTML-styled logs
-let consoleLogs = [];
-
-// Override console.log to capture logs
-const originalLog = console.log;
-console.log = (...args) => {
-    const logMessage = args.join(' ');
-    const coloredLog = logMessage
-        .replace(/\x1b\[32m/g, '<span style="color: green;">')  // Handle green
-        .replace(/\x1b\[33m/g, '<span style="color: yellow;">') // Handle yellow
-        .replace(/\x1b\[31m/g, '<span style="color: red;">')    // Handle red
-        .replace(/\x1b\[0m/g, '</span>');                        // Reset styling
-
-    consoleLogs.push(coloredLog); // Store the HTML-styled logs
-
-    // Log to console and file
-    originalLog(...args);
-    const timestamp = new Date().toISOString();
-    const logEntry = `[${timestamp}] ${logMessage}\n`;
-    fs.appendFileSync(path.join(__dirname, 'server.log'), logEntry); // Save to file
-};
-
-// Log initialization
-console.log("Server starting...");
+const SESSION_FOLDER = './auth5a'
 
 async function startWhatsAppConnection ()  {
+
+const art = require('ascii-art');
+
+fs.readFile('./res/ascii.txt', 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error reading the file:', err);
+    return;
+  }
+  console.log(data);
+});
+
+
+
     const {
         state,
         saveCreds
@@ -137,23 +131,7 @@ const CustomBrowsersMap = {
 
     AlexaInc.ev.on('connection.update', (update) => {
 
- const app = express();
-
-    app.get('/status', (req, res) => {
-        res.json({ status: "Online" });
-    });
-
-    app.get('/get-phone-number', (req, res) => {
-        if (botPhoneNumber) {
-            res.json({ phoneNumber: botPhoneNumber });
-        } else {
-            res.status(500).json({ error: 'Bot not connected.' });
-        }
-    });
-
-
-
-        const { connection, qr, isNewLogin } = update;
+        const { connection,lastDisconnect, qr, isNewLogin } = update;
         if (qr) {
             console.log("\n🔄 New QR code generated! Please scan it.\n");
             var qrcode = require('qrcode-terminal');
@@ -164,13 +142,21 @@ qrcode.generate(qr, {small: true}, function (qrcode) {
 });
             
         }
+
         isConnected = connection === 'open';
 
-        if (connection === 'open') {
+if (connection === 'open') {
 
 
-            console.log(AlexaInc.user.id);
-            botPhoneNumber = AlexaInc.user.id.split(':')[0];
+ global.botPhoneNumber = AlexaInc.user.id.split(':')[0];
+
+ if (!global.botPhoneNumber) {
+    global.connectionStatus = 'Offline';
+ }else{
+    global.connectionStatus = 'Online';
+ }
+            
+
             const ownerNumber = process.env["Owner_nb"];
             if (ownerNumber) {
                 AlexaInc.sendMessage(`${ownerNumber}@s.whatsapp.net`, {
@@ -186,7 +172,21 @@ qrcode.generate(qr, {small: true}, function (qrcode) {
                 if (isNewLogin) {
             console.log("🔄 Restarting connection after QR scan...");
             setTimeout(startWhatsAppConnection, 2000); // Restart after 2 sec
-        }
+        } else                 if (connection === 'close') {
+            const reason = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.message;
+ console.log(reason);
+
+            if (reason === DisconnectReason.loggedOut) {
+                console.log('WhatsApp logged out. Deleting session and restarting...');
+                
+                // Delete the authentication folder
+                if (fs.existsSync(SESSION_FOLDER)) {
+                    fs.rmSync(SESSION_FOLDER, { recursive: true, force: true });
+                }
+
+                // Restart the bot
+                startWhatsAppConnection();
+            }} 
     });
 
 
@@ -196,173 +196,56 @@ qrcode.generate(qr, {small: true}, function (qrcode) {
 }
 startWhatsAppConnection();
 
-// Setup session middleware
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false, httpOnly: false, maxAge: 60 * 60 * 1000 }
-}));
-
-app.get('/get-console-logs', isAuthenticated, (req, res) => {
-    const logFilePath = path.join(__dirname, 'logs/combined.log');
-    
-    // Read the latest logs
-    fs.readFile(logFilePath, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).json({ error: 'Error reading logs' });
-        }
-        res.json({ logs: data.split('\n').slice(-100) }); // Send last 100 logs
-    });
-});
-
-
-// Login and logout APIs
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
-        req.session.isLogged = true;
-        req.session.save();
-        console.log(`Admin logged in: ${username}`);
-        return res.json({ success: true });
-    }
-    console.log(`Failed login attempt: ${username}`);
-    res.status(401).json({ success: false, message: "Invalid credentials" });
-});
-
-app.post('/logout', (req, res) => {
-    console.log('Admin logged out');
-    req.session.destroy(() => res.json({ success: true }));
-});
-
-// Check authentication
-function isAuthenticated(req, res, next) {
-    if (req.session.isLogged) {
-        return next();
-    } else if (req.headers.accept && req.headers.accept.includes('application/json')) {
-            return res.status(401).json({ success: false, message: "Unauthorized" });
-        } else {
-            return res.redirect('/login'); // Redirect non-API users to the login page
-        }
-
-   // res.sendFile(path.join(__dirname, 'public', 'login.html'));
-
+// Log initialization
+function writeData(data) {
+  fs.writeFileSync(dataFile, JSON.stringify(data));
 }
 
-// Route to check if user is logged in
-app.get('/is-logged-in', (req, res) => {
-    if (req.session.isLogged) {
-        res.json({ isLoggedIn: true });
-    } else {
-        res.json({ isLoggedIn: false });
-    }
-});
+setInterval(() => {
+  const data = { number: global.botPhoneNumber , status: global.connectionStatus };
+  writeData(data);
+  //console.log('Data written to shared file:', data);
+}, 5000); // Write data every 5 seconds
 
-// Serve control panel
-app.get('/control', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'control.html'));
-});
-
-// Serve login page
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/sysstats', async (req, res) => {
-  try {
-    const cpuData = await si.currentLoad();
-    const memData = await si.mem();
-    const netData = await si.networkStats();
-
-    // CPU usage in percentage (0-100)
-    const cpuUsage = cpuData.currentLoad;
-
-    // Memory usage in percentage (0-100)
-    const memUsage = (memData.used / memData.total) * 100;
-
-    // networkStats() returns an array (one element per network interface).
-    // We'll use the first interface (netData[0]) or you can sum them if needed.
-    const downloadSpeed = netData[0].rx_sec; // bytes/sec
-    const uploadSpeed   = netData[0].tx_sec; // bytes/sec
-
-    res.json({
-      cpu: cpuUsage,
-      memory: memUsage,
-      downloadSpeed,
-      uploadSpeed
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to retrieve system stats' });
-  }
-});
-
-
-const http = require('http')
-const server = http.createServer(app); // Create an HTTP server from Express
-const wss = new WebSocket.Server({ server }); // Attach WebSocket to the same server
-wss.on('connection', (ws) => {
-    //console.log('WebSocket Client Connected');
-
-    // Function to send latest logs
-    const sendLogs = () => {
-        const logFilePath = path.join(__dirname, 'logs/combined.log');
-
-        fs.readFile(logFilePath, 'utf8', (err, data) => {
-            if (err) {
-                console.error('Error reading logs:', err);
-                return;
-            }
-            const logs = data.split('\n').slice(-100); // Get last 100 log entries
-            ws.send(JSON.stringify({ logs }));
-        });
-    };
-
-    // Send logs every second
-    const logInterval = setInterval(sendLogs, 100);
-
-    // Handle WebSocket close
-    ws.on('close', () => {
-        console.log('WebSocket Client Disconnected');
-        clearInterval(logInterval);
-    });
-
-    // Send logs immediately after connection
-    sendLogs();
-});
-
-
-
-
-// Start server
-server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
 
 
 // Function to delete logs directory
-const logsDir = path.join(__dirname, "logs");
-function deleteLogsDir() {
-    if (fs.existsSync(logsDir)) {
-        fs.rmSync(logsDir, { recursive: true, force: true });
-        console.log("🗑️ Logs directory deleted.");
-    }
-}
+
 
 // Listen for process exit signals
-process.on("exit", deleteLogsDir);          // Normal exit
+          // Normal exit
+process.on('exit', () => {
+  // When index.js stops or crashes, set data to null
+    const data = { number: null , status: 'Offline' };
+  writeData(data);
+ // deleteLogsDir();
+  
+});
 process.on("SIGINT", () => {                // Ctrl + C
     console.log("\n⚠️ Process interrupted (SIGINT)");
-    deleteLogsDir();
+    const data = { number: null , status: 'Offline' };
+  writeData(data);
+    //deleteLogsDir();
     process.exit(0);
 });
 process.on("SIGTERM", () => {               // Kill command
     console.log("\n⚠️ Process terminated (SIGTERM)");
-    deleteLogsDir();
+    const data = { number: null , status: 'Offline' };
+  writeData(data);
+    //deleteLogsDir();
     process.exit(0);
 });
 process.on("uncaughtException", (err) => {  // Unhandled error
     console.error("❌ Uncaught Exception:", err);
-    deleteLogsDir();
+    const data = { number: null , status: 'Offline' };
+  writeData(data);
+    //deleteLogsDir();
     process.exit(1);
 });
-process.on("beforeExit", deleteLogsDir);    // Just before exit
+process.on('beforeExit', () => {
+  // When index.js stops or crashes, set data to null
+    const data = { number: null , status: 'Offline' };
+  writeData(data);
+  //deleteLogsDir();
+  console.log('index.js stopped, data set to null');
+});   // Just before exit
