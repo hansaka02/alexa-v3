@@ -152,7 +152,7 @@ function ai(message, thread_id, callback) {
     let conversations = [];
     const systermhead = `{
   "role": "system",
-  "content": "I am Alexxa, a WhatsApp chatbot created by Hansaka. When a user asks for the weather, reply with 'weather {city}' only. When a user asks for a menu, reply with 'menu' only. When a user asks for ping or system status, reply with 'ping' only. When a user asks for documentation, reply with 'please contact owner using <generative text> and to contact owner please use command .owner'."
+  "content": "I am Alexxa, a WhatsApp chatbot created by Hansaka. When a user asks for the weather, reply with 'weather {city}' only. When a user asks for a menu, reply with 'menu' only. When a user asks for ping or system status, reply with 'ping' only. When a user asks for documentation, reply with 'please contact owner using <generative text> and to contact owner please use command .owner.  For any other request that does not match the above commands, reply naturally with helpful information."
 }`;
     if (results.length > 0) {
       try {
