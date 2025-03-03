@@ -39,6 +39,12 @@ function startApp(scriptName, onExit) {
   // Capture stderr data
   process.stderr.on('data', (data) => {
     logOutput(scriptName, 'stderr:',`${data}`);
+    
+    // If stderr contains status code 408 (Request Timeout), restart index.js
+    if (data.includes("408")) {
+      logOutput(scriptName, 'Status Code 408 detected. Restarting index.js...');
+      startApp('index.js', onExit);
+    }
   });
 
   // Handle the process exit (for restarting or handling crashes)
@@ -82,31 +88,26 @@ function deleteLogsDir() {
           // Normal exit
 process.on('exit', () => {
   // When index.js stops or crashes, set data to null
-   
   deleteLogsDir();
   //console.log('index.js stopped, data set to null');
 });
 process.on("SIGINT", () => {                // Ctrl + C
     console.log("\n⚠️ Process interrupted (SIGINT)");
-    
     deleteLogsDir();
     process.exit(0);
 });
 process.on("SIGTERM", () => {               // Kill command
     console.log("\n⚠️ Process terminated (SIGTERM)");
-    
     deleteLogsDir();
     process.exit(0);
 });
 process.on("uncaughtException", (err) => {  // Unhandled error
     console.error("❌ Uncaught Exception:", err);
-    
     deleteLogsDir();
     process.exit(1);
 });
 process.on('beforeExit', () => {
   // When index.js stops or crashes, set data to null
-    
   deleteLogsDir();
   console.log('index.js stopped, data set to null');
 });   // Just before exit
