@@ -1,46 +1,112 @@
-const { exec, spawn } = require("child_process");
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
 
-let processInstance;
-const logFile = "logs/combined.log"; // Define log file
+// Define log file paths for both scripts
+const logDir = './logs';
+const indexLogFile = path.join(logDir, 'index.log');
+const serverLogFile = path.join(logDir, 'server.log');
 
-// Function to start index.js using PM2
-function startProcess() {
-  console.log("Starting index.js using PM2...");
-  processInstance = spawn("pm2", [
-    "start", "index.js",
-    "--name", "alexaa-v3",
-    "--log", logFile, // Single log file for both stdout & stderr
-    "--merge-logs"
-  ], {
-    stdio: "inherit",
+// Ensure the logs directory exists
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
+}
+
+// Function to log output to respective log files
+function logOutput(scriptName, type , data) {
+  const timestampedData = `${new Date().toISOString()} - ${type}\n ${data}`;
+  
+  // Log to file in real-time
+  if (scriptName === 'index.js') {
+    fs.appendFileSync(indexLogFile,  `${data}\n`);
+  } else if (scriptName === 'server.js') {
+    fs.appendFileSync(serverLogFile, `${data}\n`);
+  }
+
+  // Also output to console in real-time
+  console.log(timestampedData);
+}
+
+// Function to start a given script
+function startApp(scriptName, onExit) {
+  const process = spawn('node', [scriptName]);
+
+  // Capture stdout data
+  process.stdout.on('data', (data) => {
+    logOutput(scriptName, 'stdout:',`${data}`);
   });
 
-  processInstance.on("exit", (code, signal) => {
-    console.log(`index.js exited with code ${code}, signal ${signal}`);
+  // Capture stderr data
+  process.stderr.on('data', (data) => {
+    logOutput(scriptName, 'stderr:',`${data}`);
+  });
+
+  // Handle the process exit (for restarting or handling crashes)
+  process.on('exit', (code, signal) => {
     if (code !== 0) {
-      console.log("Restarting due to an unexpected exit...");
-      startProcess(); // Restart on crash
+      logOutput(scriptName, `Process exited with code: ${code}`);
     }
+    if (signal) {
+      logOutput(scriptName, `Process was killed with signal: ${signal}`);
+    }
+    // If this is index.js and it crashed, restart it
+    if (scriptName === 'index.js') {
+      logOutput(scriptName, `Restarting index.js...`);
+      startApp('index.js', onExit);
+    } else {
+      // If server.js crashes, restart it
+      logOutput(scriptName, `Restarting server.js...`);
+      startApp('server.js', onExit);
+    }
+    // Call the onExit callback (if any)
+    if (onExit) onExit();
   });
 }
 
-// Function to restart index.js every hour
-function restartProcess() {
-  console.log("Restarting index.js using PM2...");
-  exec(`pm2 restart alexaa-v3 --log ${logFile} --merge-logs`, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error restarting index.js: ${error.message}`);
-      return;
+// Start both index.js and server.js and keep them running independently
+startApp('server.js');  // Keep server.js running independently
+startApp('index.js', () => {
+  // If index.js crashes, this callback can be used to log additional actions or stop server.js if needed.
+  // In this case, we're not stopping server.js.
+});
+
+const logsDir = path.join(__dirname, "logs");
+function deleteLogsDir() {
+    if (fs.existsSync(logsDir)) {
+        fs.rmSync(logsDir, { recursive: true, force: true });
+        console.log("🗑️ Logs directory deleted.");
     }
-    if (stderr) {
-      console.error(`PM2 stderr: ${stderr}`);
-    }
-    console.log(`PM2 stdout: ${stdout}`);
-  });
 }
 
-// Start index.js initially
-startProcess();
-
-// Restart every hour
-setInterval(restartProcess, 3600000);
+// Listen for process exit signals
+          // Normal exit
+process.on('exit', () => {
+  // When index.js stops or crashes, set data to null
+   
+  deleteLogsDir();
+  //console.log('index.js stopped, data set to null');
+});
+process.on("SIGINT", () => {                // Ctrl + C
+    console.log("\n⚠️ Process interrupted (SIGINT)");
+    
+    deleteLogsDir();
+    process.exit(0);
+});
+process.on("SIGTERM", () => {               // Kill command
+    console.log("\n⚠️ Process terminated (SIGTERM)");
+    
+    deleteLogsDir();
+    process.exit(0);
+});
+process.on("uncaughtException", (err) => {  // Unhandled error
+    console.error("❌ Uncaught Exception:", err);
+    
+    deleteLogsDir();
+    process.exit(1);
+});
+process.on('beforeExit', () => {
+  // When index.js stops or crashes, set data to null
+    
+  deleteLogsDir();
+  console.log('index.js stopped, data set to null');
+});   // Just before exit
