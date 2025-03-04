@@ -28,7 +28,10 @@ RUN mkdir -p /api/auth5a \
     && chown root:appuser /api/auth5a \  
     && chmod 660 /api/auth5a \           
     && chmod +t /api/auth5a 
-
+#
+RUN mkdir -p /api/logs \
+    && chown appuser:appuser /api/logs \
+    && chmod 755 /api/logs
 # Explanation:
 # - Root owns the folder, appuser is in the group
 # - Read & write for owner and group
