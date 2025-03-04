@@ -191,7 +191,19 @@ let systemHeader = [{
     //conversations.push(systemHeader);
      conversations.push({ role: "user", content: message });
 
-    let aipostmg = [...systemHeader, ...conversations];
+// If the length of the conversations array is greater than 16, slice to the last 15
+let conversations123;
+
+if (conversations.length > 16) {
+  conversations123 = conversations.slice(conversations.length - 15); // Keep only the last 14 messages from history
+} else {
+  conversations123 = [...conversations]; // Use all conversations if length is <= 16
+}
+
+// Combine the system header and the last 7 message from user and last 7 message from assistant into the aipostmg array
+
+    let aipostmg = [...systemHeader, ...conversations123];
+    //console.log(aipostmg);
 //console.log(aipostmg);
     // Retry function for OpenRouter API call
     function callAPIWithRetry(retries = 5) {
@@ -202,7 +214,7 @@ let systemHeader = [{
             model: process.env.CHAT_MODEL,
             user: thread_id,
             temperature: 1,
-            max_tokens: 1500, // Reduced max tokens to avoid overloading
+            max_tokens: 3000, // Reduced max tokens to avoid overloading
             top_p: 1
           }).then(response => {
             if (!response || !response.choices || response.choices.length === 0) {
