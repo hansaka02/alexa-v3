@@ -11,7 +11,7 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user and group
-RUN useradd -m -d /home/appuser -s /bin/bash appuser
+
 
 # Set working directory
 WORKDIR /api
@@ -24,25 +24,14 @@ RUN npm install --only=production && npm install pm2 -g
 COPY . .
 
 # Create the auth5a folder and set permissions
-USER root
 
-RUN mkdir -p /api/auth5a \
-    && chown root:appuser /api/auth5a \
-    && chmod 770 /api/auth5a \
-    && chmod +t /api/auth5a \
-    && chattr +i /api/auth5a
-
-#
-RUN mkdir -p /api/logs \
-    && chown appuser:appuser /api/logs \
-    && chmod 755 /api/logs
 # Explanation:
 # - Root owns the folder, appuser is in the group
 # - Read & write for owner and group
 # - Sticky bit prevents deletion of files inside
 
 # Switch to non-root user
-USER appuser
+
 
 # Expose the application port
 EXPOSE 4001
