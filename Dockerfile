@@ -25,11 +25,13 @@ COPY . .
 # Create the auth5a folder and set permissions
 RUN mkdir -p /api/auth5a \
     && chown root:appuser /api/auth5a \  
-    # Root owns the folder, appuser is in the group
     && chmod 660 /api/auth5a \           
-    # Read & write for owner and group
-    && chmod +t /api/auth5a \            
-    # Sticky bit prevents deletion of files inside
+    && chmod +t /api/auth5a 
+
+# Explanation:
+# - Root owns the folder, appuser is in the group
+# - Read & write for owner and group
+# - Sticky bit prevents deletion of files inside
 
 # Switch to non-root user
 USER appuser
