@@ -25,6 +25,7 @@ const DB_HOST = process.env["DB_HOST"];
 const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
+const DB_PORT = process.env["DB_PORT"] || 3306 ;
 const {isUrl} = require('./res/js/func')
 function generateWeatherSummary(temperature, windspeed, winddirection) {
     // Define the temperature description
@@ -125,7 +126,7 @@ const db = mysql.createConnection({
   user: DB_UNAME,
   password: DB_PASS,
   database: DB_NAME,
-  port:27250
+  port:DB_PORT
 });
 
 db.connect((err) => {
@@ -140,7 +141,7 @@ db.connect((err) => {
 // Store conversation history
 const conversations = {};
 
-function ai(message, thread_id, callback) {
+function ai(thread_id_name, message, thread_id, callback) {
   const query1 = 'SELECT `conventions` FROM `conversation_history` WHERE `id` = ?';
 
   db.execute(query1, [thread_id], (err, results) => {
@@ -170,24 +171,27 @@ function ai(message, thread_id, callback) {
     }
 
     // Add user message
-let systemHeader = {
+let systemHeader = [{
   role: "system",
-  content: `*I am Alexxa, a WhatsApp chatbot created by Hansaka.*\n\n` +
-           `➤ When a user asks for the weather, reply with: \`\`\`weather {city}\`\`\`\n\n` +
-           `➤ When a user asks for a menu, reply with: \`\`\`menu\`\`\`\n\n` +
-           `➤ When a user asks for ping or system status, reply with: \`\`\`ping\`\`\`\n\n` +
+  content: `*assistent name is random of alexa, a WhatsApp chatbot created by Hansaka.*\n\n` +
+           `➤ assistant name must be alexa its not virtual assistant or chatbot.\n\n`+
+           `➤ when a user send greeting massage reply  hello ${thread_id_name} i name is alexa. your virtual assistant. how can I help you today?\n\n`+
+           `➤ When a user asks for the weather of any city , reply must be two or three words weather {city entered by user} \n\n` +
+           `➤ When a user asks for a menu, reply must be one word its === menu \n\n` +
+           `➤ When a user asks for ping or system status, reply must be one word its === ping \n\n` +
            `➤ When a user asks for documentation, reply with:\n` +
-           `\`\`\`please contact owner  to contact owner please use command .owner\`\`\`\n\n` +
+           `\`\`\`please contact owner  to contact owner please use command .owner if ${thread_id} detected as 94740970377@s.whatsapp.net or 94763545014@s.whatsapp.net send are you joking you are the my owner ha haa \`\`\`\n\n` +
            `➤ *All text formatting must follow WhatsApp text formatting standards.*\n\n` +
            `➤ *For any other requests, please respond naturally with helpful, engaging, or creative responses.*\n\n` +
            `➤ *The AI should be flexible to handle different queries such as jokes, random facts, small talk, or other general knowledge.*\n\n` +
            `➤ *If the user asks for something outside the predefined commands, respond naturally and provide an engaging response.*`
-};
+} , {role:"assistant", content:"what is your name ?"},{role:"user",content: thread_id_name}] ;
 
 
     //conversations.push(systemHeader);
      conversations.push({ role: "user", content: message });
-    let aipostmg = [systemHeader, ...conversations];
+
+    let aipostmg = [...systemHeader, ...conversations];
 //console.log(aipostmg);
     // Retry function for OpenRouter API call
     function callAPIWithRetry(retries = 5) {
@@ -561,7 +565,7 @@ default :{
 }else {
 
 /*****************   ai function for  language process  *****************/
-ai(messageText, sender, async (err, reply) => {
+ai(msg.pushName , messageText, sender, async (err, reply) => {
   AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '🔄', key: msg.key}});
   if (err) {
     console.error("Error:", err);
