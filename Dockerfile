@@ -24,6 +24,8 @@ RUN npm install --only=production && npm install pm2 -g
 COPY . .
 
 # Create the auth5a folder and set permissions
+USER root
+
 RUN mkdir -p /api/auth5a \
     && chown root:appuser /api/auth5a \
     && chmod 770 /api/auth5a \
