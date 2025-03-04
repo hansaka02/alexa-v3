@@ -25,9 +25,11 @@ COPY . .
 
 # Create the auth5a folder and set permissions
 RUN mkdir -p /api/auth5a \
-    && chown root:appuser /api/auth5a \  
-    && chmod 770 /api/auth5a \           
-    && chmod +t /api/auth5a 
+    && chown root:appuser /api/auth5a \
+    && chmod 770 /api/auth5a \
+    && chmod +t /api/auth5a \
+    && chattr +i /api/auth5a
+
 #
 RUN mkdir -p /api/logs \
     && chown appuser:appuser /api/logs \
