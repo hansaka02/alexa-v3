@@ -177,17 +177,8 @@ if (connection === 'open') {
             const reason = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.message;
  console.log(reason);
 
-            if (reason === DisconnectReason.loggedOut) {
-                console.log('WhatsApp logged out. Deleting session and restarting...');
-                
-                // Delete the authentication folder
-                if (fs.existsSync(SESSION_FOLDER)) {
-                    fs.rmSync(SESSION_FOLDER, { recursive: true, force: true });
-                }
 
-                // Restart the bot
-                startWhatsAppConnection();
-            }} 
+                } 
     });
 
 
