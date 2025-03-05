@@ -25,7 +25,7 @@ const DB_HOST = process.env["DB_HOST"];
 const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
-const DB_PORT = process.env["DB_PORT"] || 3306 ;
+const DB_PORT = process.env["DB_PORT"] || 27250 ;
 const {isUrl} = require('./res/js/func')
 function generateWeatherSummary(temperature, windspeed, winddirection) {
     // Define the temperature description
