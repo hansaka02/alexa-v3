@@ -10,7 +10,7 @@ const { downloadMediaMessage, proto, prepareWAMessageMedia , generateWAMessageFr
 const { fileutc } = require('./res/js/fu.js');
 const {runSpeedTest} = require('./res/js/speed_test.js')
 const FormData = require('form-data');
-
+const {websearch_query} = require('./res/web/web')
 
 const chalk = require('kleur');
 const TEMP_DIR = path.join(__dirname, 'temp');
@@ -25,7 +25,7 @@ const DB_HOST = process.env["DB_HOST"];
 const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
-const DB_PORT = process.env["DB_PORT"] || 27250 ;
+const DB_PORT = process.env["DB_PORT"] || 3306 ;
 const {isUrl} = require('./res/js/func')
 function generateWeatherSummary(temperature, windspeed, winddirection) {
     // Define the temperature description
@@ -171,21 +171,12 @@ function ai(thread_id_name, message, thread_id, callback) {
     }
 
     // Add user message
-let systemHeader = [{
-  role: "system",
-  content: `*assistent name is random of alexa, a WhatsApp chatbot created by Hansaka.*\n\n` +
-           `➤ assistant name must be alexa its not virtual assistant or chatbot.\n\n`+
-           `➤ when a user send greeting massage reply  hello ${thread_id_name} i name is alexa. your virtual assistant. how can I help you today?\n\n`+
-           `➤ When a user asks for the weather of any city , reply must be two or three words weather {city entered by user} \n\n` +
-           `➤ When a user asks for a menu, reply must be one word its === menu \n\n` +
-           `➤ When a user asks for ping or system status, reply must be one word its === ping \n\n` +
-           `➤ When a user asks for documentation, reply with:\n` +
-           `\`\`\`please contact owner  to contact owner please use command .owner if ${thread_id} detected as 94740970377@s.whatsapp.net or 94763545014@s.whatsapp.net send are you joking you are the my owner ha haa \`\`\`\n\n` +
-           `➤ *All text formatting must follow WhatsApp text formatting standards.*\n\n` +
-           `➤ *For any other requests, please respond naturally with helpful, engaging, or creative responses.*\n\n` +
-           `➤ *The AI should be flexible to handle different queries such as jokes, random facts, small talk, or other general knowledge.*\n\n` +
-           `➤ *If the user asks for something outside the predefined commands, respond naturally and provide an engaging response.*`
-} , {role:"assistant", content:"what is your name ?"},{role:"user",content: thread_id_name}] ;
+let systemHeader = [                    {
+                        role: 'system',
+                        content: 
+                       `- *assistant name is alexa, a WhatsApp chatbot created by Hansaka.* \n\n assistant name must be alexa its not virtual assistant or chatbot. when a user send greeting message reply hello ${thread_id_name}.I am your virtual assistant. how can I help you today?.\n\n When a user used weather quary prompt lite what weather loom like or what was weather today to find weather of any city, reply must only be contain  "weather city_name" dont include weather infomations or any other words like"today yesterdat tomorow or any".\n\n When a user asks for a menu message like show me menu what is menu , reply must be one word its 'menu' \n\n When a user asks for ping or system status message like what is system status or  test ping , reply must be include one word its 'ping' \n\n wha a user asks for documentation reply must be include one word its 'doc' \n\n All text formatting must follow WhatsApp text formatting standards. \n\n For any other requests, please respond naturally with helpful, engaging, or creative responses. \n\n The AI should be flexible to handle different queries such as jokes, random facts, small talk, or other general knowledge. \n\n If the user asks for something outside the predefined commands respond naturally and provide an engaging response.`
+
+                    } , {role:"assistant", content:"what is your name ?"},{role:"user",content: `${thread_id_name} is my name remember it`}] ;
 
 
     //conversations.push(systemHeader);
@@ -194,8 +185,8 @@ let systemHeader = [{
 // If the length of the conversations array is greater than 16, slice to the last 15
 let conversations123;
 
-if (conversations.length > 16) {
-  conversations123 = conversations.slice(conversations.length - 15); // Keep only the last 14 messages from history
+if (conversations.length > 12) {
+  conversations123 = conversations.slice(conversations.length - 11); // Keep only the last 14 messages from history
 } else {
   conversations123 = [...conversations]; // Use all conversations if length is <= 16
 }
@@ -213,8 +204,8 @@ if (conversations.length > 16) {
             messages: aipostmg ,
             model: process.env.CHAT_MODEL,
             user: thread_id,
-            temperature: 1,
-            max_tokens: 3000, // Reduced max tokens to avoid overloading
+            temperature: 0.5,
+            max_tokens: 1500, // Reduced max tokens to avoid overloading
             top_p: 1
           }).then(response => {
             if (!response || !response.choices || response.choices.length === 0) {
@@ -266,6 +257,7 @@ if (conversations.length > 16) {
               return callback('Error inserting conversation', null);
             }
             console.log('Conversation inserted successfully');
+            //console.log(botResponse)
             callback(null, botResponse.content);
           });
         }
@@ -374,6 +366,9 @@ const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)
 ┃  .weather <city> - Get weather info
 ┃  .sticker - Convert image to sticker
 ┃  .owner  - Chat with Owner
+┃  .web  - search on web
+┃  .browse  - search on web
+┃  .search  - search on web
 ┃ 
 ┃     ↣𝐘𝐨𝐮𝐭𝐮𝐛𝐞↢ 
 ┃
@@ -462,7 +457,7 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
                     //console.log(`Temporary file deleted: ${filePath}`);
 
                 } catch (error) {
-                  AlexaInc.sendMessage(msg.key.remoteJid, 'sorry sticker image fail');
+                  AlexaInc.sendMessage(msg.key.remoteJid, {text:'sorry sticker image fail'});
     AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '☹️', key: msg.key}})
                     console.error("Error processing media:", error);
                 }
@@ -471,56 +466,13 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
 }
 
 
-// case 'test':{
-
-// //let sender = msg.key.remoteJid; // The recipient's JID
-
-// let sections = [
-//     {
-//         title: "Choose an Option", // Section Title
-//         rows: [
-//             {
-//                 title: "📥 Download MP3",
-//                 rowId: "#download_mp3",
-//                 description: "Download audio file"
-//             },
-//             {
-//                 title: "📥 Download MP4",
-//                 rowId: "#download_mp4",
-//                 description: "Download video file"
-//             },
-//             {
-//                 title: "🔎 Search YouTube",
-//                 rowId: "#ytsearch",
-//                 description: "Search for YouTube videos"
-//             },
-//             {
-//                 title: "🎵 Get Song Lyrics",
-//                 rowId: "#lyrics",
-//                 description: "Find lyrics of any song"
-//             },
-//             {
-//                 title: "📌 Help & Commands",
-//                 rowId: "#help",
-//                 description: "Get a list of available commands"
-//             }
-//         ]
-//     }
-// ];
-
-// // Sending the list message
-// AlexaInc.sendListMsg(
-//     msg.key.remoteJid, 
-//     "Please select an option from the list below:",  // Main text
-//     "Bot Assistant",  // Footer text
-//     "Available Features", // Title
-//     "Click to Choose", // Button text
-//     sections, 
-//     msg // Quoted message (optional)
-// );
-
-//   break
-// }
+ case 'search': case 'browse':case 'web':{
+websearch_query(text).then(response=>{
+    const resultweb = response.join('\n\n\t');
+  AlexaInc.sendMessage(msg.key.remoteJid , {text:resultweb},{quoted:msg})
+})
+  break
+ }
 
 case 'weather': {
     if (!text) {
@@ -583,14 +535,19 @@ ai(msg.pushName , messageText, sender, async (err, reply) => {
     console.error("Error:", err);
   } else {    
     let prosseseb = reply.trim().split(/\s+/)[0].toLowerCase(); // Assign as command
-        const bargs = reply.trim().split(/ +/).slice(1);
+    let replyyy = reply.replace(/\s+/g, ' ').trim()
+
+    if (replyyy.includes("{$var123a$}")) {
+    replyyy = reply.replace("{$var123a$}", msg.pushName);
+}
+        const bargs = replyyy.trim().split(/ +/).slice(1);
         const btext  = bargs.join(" ")
     const cpuData = await si.cpus()[0].model;
 const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
 const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
     switch(prosseseb){
 
-case 'menu':{
+case 'menu' : case 'menu.' :{
 
  const roleuser =   ( sender = process.env['Owner_nb']+'@s.whatsapp.net') && "Owner" || "User"
 
@@ -618,6 +575,9 @@ case 'menu':{
 ┃  .weather <city> - Get weather info
 ┃  .sticker - Convert image to sticker
 ┃  .owner  - Chat with Owner
+┃  .web  - search on web
+┃  .browse  - search on web
+┃  .search  - search on web
 ┃ 
 ┃     ↣𝐘𝐨𝐮𝐭𝐮𝐛𝐞↢ 
 ┃
@@ -634,7 +594,7 @@ case 'menu':{
   break
 }
 
-case 'ping':{
+case 'ping':case 'ping.':{
 
 
 
@@ -697,7 +657,7 @@ ${summary}
 
 
     default:{
-          AlexaInc.sendMessage(msg.key.remoteJid,{text:`${reply}`},{ quoted: msg });
+          AlexaInc.sendMessage(msg.key.remoteJid,{text:`${replyyy}`},{ quoted: msg });
           AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}});
     AlexaInc.readMessages([msg.key]);
     }
