@@ -470,8 +470,8 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
 
 
  case 'search': case 'browse':case 'web':{
-websearch_query(text).then(response=>{
-    const resultweb = response.join('\n\n\t');
+websearch_query(text).then(async response=>{
+    const resultweb = await response.join('\n\n\t');
   AlexaInc.sendMessage(msg.key.remoteJid , {text:resultweb},{quoted:msg})
 })
   break
