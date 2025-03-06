@@ -316,18 +316,15 @@ messageText = msg.message?.conversation ||
   const messageonlyText = msg.message?.conversation ||
               msg.message?.extendedTextMessage?.text
 
-if (!messageText) {
 
-}else{
-          const args = messageText.trim().split(/ +/).slice(1);
-        const text = q = args.join(" ")
-}
 
 
        // console.log(args)
  //console.log(msg.message.messageContextInfo);
 
            if (messageText) {
+                         const args = messageText.trim().split(/ +/).slice(1);
+        const text = q = args.join(" ")
              console.log(chalk.red().bold(msg.pushName) +chalk.yellow().bold(`[${sender}]`)+ ': ' + chalk.blue().bold(messageText));
 
     // Check if the message has any text to process
