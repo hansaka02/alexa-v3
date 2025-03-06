@@ -542,7 +542,7 @@ ai(msg.pushName , messageText, sender, async (err, reply) => {
     console.error("Error:", err);
   } else {    
     let prosseseb = reply.trim().split(/\s+/)[0].toLowerCase(); // Assign as command
-    let replyyy = reply.replace(/\s+/g, ' ').trim()
+    let replyyy = reply.replace(/\s+/, '\t').trim()
 
     if (replyyy.includes("{$var123a$}")) {
     replyyy = reply.replace("{$var123a$}", msg.pushName);
