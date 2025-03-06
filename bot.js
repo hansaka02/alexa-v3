@@ -5,6 +5,7 @@ const si = require('os');
 const axios = require('axios');
 const sharp = require('sharp');
 const { downloadMediaMessage, proto, prepareWAMessageMedia , generateWAMessageFromContent} = require('@whiskeysockets/baileys');
+const { generateLinkPreview } = require("link-preview-js");
 //const {generateWAMessageFromContent} = require('@adiwajshing/baileys')
 //const { Button, ButtonMessage } = require('@whiskeysockets/baileys').WA_MESSAGE_TYPE;
 const { fileutc } = require('./res/js/fu.js');
@@ -25,7 +26,7 @@ const DB_HOST = process.env["DB_HOST"];
 const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
-const DB_PORT = process.env["DB_PORT"] || 27250 ;
+const DB_PORT = process.env["DB_PORT"] || 3306 ;
 const {isUrl} = require('./res/js/func')
 function generateWeatherSummary(temperature, windspeed, winddirection) {
     // Define the temperature description
@@ -278,6 +279,7 @@ fs.ensureDirSync(TEMP_DIR);
 
 async function handleMessage(AlexaInc, { messages, type }) {
 
+
      AlexaInc.sendListMsg = (jid, text = '', footer = '', title = '' , butText = '', sects = [], quoted) => {
         let sections = sects
         var listMes = {
@@ -323,7 +325,7 @@ messageText = msg.message?.conversation ||
  //console.log(msg.message.messageContextInfo);
 
            if (messageText) {
-                         const args = messageText.trim().split(/ +/).slice(1);
+                      const args = messageText.trim().split(/ +/).slice(1);
         const text = q = args.join(" ")
              console.log(chalk.red().bold(msg.pushName) +chalk.yellow().bold(`[${sender}]`)+ ': ' + chalk.blue().bold(messageText));
 
@@ -470,9 +472,11 @@ const stickerBuffer = await fs.readFileSync(stickerPath);
 
 
  case 'search': case 'browse':case 'web':{
-websearch_query(text).then(async response=>{
-    const resultweb = await response.join('\n\n\t');
-  AlexaInc.sendMessage(msg.key.remoteJid , {text:resultweb},{quoted:msg})
+
+websearch_query(text).then(async (response) =>{
+    //console.log(response)
+    const resultweb = await response.join('\n\n\n\t\t');
+  AlexaInc.sendMessage(msg.key.remoteJid , {text:resultweb,  },{quoted:msg})
 })
   break
  }
