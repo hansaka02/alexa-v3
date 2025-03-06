@@ -10,8 +10,12 @@ RUN apt update \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user and group
+# Create a virtual environment
+RUN python3 -m venv /env
 
+# Activate the virtual environment and install Python packages
+RUN /env/bin/pip install --upgrade pip \
+    && /env/bin/pip install googlesearch-python beautifulsoup4 requests
 
 # Set working directory
 WORKDIR /api
@@ -19,24 +23,12 @@ WORKDIR /api
 # Copy package.json and install Node.js dependencies
 COPY package*.json ./
 RUN npm install --only=production && npm install pm2 -g
-#
-RUN pip install googlesearch-python beautifulsoup4 requests
 
 # Copy the rest of the application files
 COPY . .
 
-# Create the auth5a folder and set permissions
-
-# Explanation:
-# - Root owns the folder, appuser is in the group
-# - Read & write for owner and group
-# - Sticky bit prevents deletion of files inside
-
-# Switch to non-root user
-
-
 # Expose the application port
 EXPOSE 4001
 
-# Run the application
-CMD ["npm", "start"]
+# Use the virtual environment to run the application
+CMD ["/env/bin/npm", "start"]
