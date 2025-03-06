@@ -4,10 +4,21 @@ const path = require('path');
 // Function to query Python script
 function getSearchResults(query) {
   return new Promise((resolve, reject) => {
-    const pythonPath = path.join(__dirname, 'myenv', 'bin', 'python'); // Linux/macOS
+    //const pythonPath = path.join(__dirname, 'myenv', 'bin', 'python'); // Linux/macOS
     // const pythonPath = path.join(__dirname, 'myenv', 'Scripts', 'python.exe'); // Windows
+let pythonExecutable;
 
-    const pythonProcess = spawn('python', ['web.py', query]);
+// Check if 'python' exists, otherwise fallback to 'python3'
+try {
+  execSync('command -v python');  // Will throw an error if python is not found
+  pythonExecutable = 'python';
+} catch (error) {
+  pythonExecutable = 'python3';
+}
+
+const pythonProcess = spawn(pythonExecutable, ['web.py', query]);
+
+
 
     let data = '';
     let errorData = '';
