@@ -19,6 +19,8 @@ WORKDIR /api
 # Copy package.json and install Node.js dependencies
 COPY package*.json ./
 RUN npm install --only=production && npm install pm2 -g
+#
+RUN pip install googlesearch-python beautifulsoup4 requests
 
 # Copy the rest of the application files
 COPY . .
