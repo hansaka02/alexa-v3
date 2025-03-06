@@ -11,11 +11,11 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment
-RUN python3 -m venv /env
+RUN python3 -m venv /api/res/web/env
 
 # Activate the virtual environment and install Python packages
-RUN /env/bin/pip install --upgrade pip \
-    && /env/bin/pip install googlesearch-python beautifulsoup4 requests
+RUN /api/res/web/env/bin/pip install --upgrade pip \
+    && /api/res/web/env/bin/pip install googlesearch-python beautifulsoup4 requests
 
 # Set working directory
 WORKDIR /api
