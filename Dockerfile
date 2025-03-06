@@ -11,7 +11,7 @@ RUN apt update \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment
-RUN python -m venv /env
+RUN python3 -m venv /env
 
 # Activate the virtual environment and install Python packages
 RUN /env/bin/pip install --upgrade pip \
