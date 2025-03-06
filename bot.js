@@ -25,7 +25,7 @@ const DB_HOST = process.env["DB_HOST"];
 const DB_UNAME = process.env["DB_UNAME"];
 const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
-const DB_PORT = process.env["DB_PORT"] || 27250 ;
+const DB_PORT = process.env["DB_PORT"] || 3306 ;
 const {isUrl} = require('./res/js/func')
 function generateWeatherSummary(temperature, windspeed, winddirection) {
     // Define the temperature description
@@ -204,7 +204,7 @@ if (conversations.length > 12) {
             messages: aipostmg ,
             model: process.env.CHAT_MODEL,
             user: thread_id,
-            temperature: 0.5,
+            temperature: 1.0,
             max_tokens: 1500, // Reduced max tokens to avoid overloading
             top_p: 1
           }).then(response => {
@@ -316,8 +316,14 @@ messageText = msg.message?.conversation ||
   const messageonlyText = msg.message?.conversation ||
               msg.message?.extendedTextMessage?.text
 
-        const args = messageText.trim().split(/ +/).slice(1);
+if (!messageText) {
+
+}else{
+          const args = messageText.trim().split(/ +/).slice(1);
         const text = q = args.join(" ")
+}
+
+
        // console.log(args)
  //console.log(msg.message.messageContextInfo);
 

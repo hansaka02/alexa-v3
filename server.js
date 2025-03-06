@@ -14,6 +14,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const dataFile = path.join(__dirname, 'sharedData.json');
 
+const cors = require("cors");  
+
+app.use(cors({ origin: "https://hansaka02.github.io" })); 
 // Setup session middleware
 app.use(session({
     secret: process.env.SESSION_SECRET,
@@ -53,6 +56,8 @@ app.get('/status', (req, res) => {
 app.get('/get-phone-number', (req, res) => {
 res.json({ phoneNumber: readData().number });
 });
+
+
 
 
 // Login and logout APIs
