@@ -4,7 +4,7 @@ const path = require('path');
 // Function to query Python script
 function getSearchResults(query) {
   return new Promise((resolve, reject) => {
-    //const pythonPath = path.join(__dirname, 'myenv', 'bin', 'python'); // Linux/macOS
+    const pythonPath = path.join(__dirname, 'env', 'bin', 'python'); // Linux/macOS
     // const pythonPath = path.join(__dirname, 'myenv', 'Scripts', 'python.exe'); // Windows
 let pythonExecutable;
 
@@ -16,7 +16,7 @@ try {
   pythonExecutable = 'python3';
 }
 
-const pythonProcess = spawn(pythonExecutable, ['web.py', query]);
+const pythonProcess = spawn(pythonPath, ['web.py', query]);
 
 
 
