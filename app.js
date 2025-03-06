@@ -1,4 +1,5 @@
 const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -32,32 +33,44 @@ function startApp(scriptName, onExit) {
   const process = spawn('node', [scriptName]);
 
   const restartIndex = (statusCode) => {
-    logOutput(scriptName, `Status Code ${statusCode} detected. Restarting index.js...`);
-    process.kill(); // Kill the current process before restarting
-    startApp('index.js', onExit);
+    if (statusCode !== 515) {
+      logOutput(scriptName, `Status Code ${statusCode} detected. Restarting index.js...`);
+      process.kill(); // Kill the current process before restarting
+      startApp('index.js', onExit);
+    } else {
+      logOutput(scriptName, `Status Code 515 detected. Not restarting index.js.`);
+    }
   };
 
   // Capture stdout data
   process.stdout.on('data', (data) => {
     logOutput(scriptName, 'stdout:', `${data}`);
-    
-    // Restart on detected status codes in stdout
-    if (scriptName === 'index.js' && (data.includes("408") || data.includes("503"))) {
-      restartIndex(data);
+
+    // Extract potential error codes from the output
+    const match = data.toString().match(/\b\d{3}\b/); // Extracts any 3-digit number
+    if (match) {
+      const statusCode = parseInt(match[0], 10);
+      if (scriptName === 'index.js' && statusCode !== 515) {
+        restartIndex(statusCode);
+      }
     }
   });
 
   // Capture stderr data
   process.stderr.on('data', (data) => {
     logOutput(scriptName, 'stderr:', `${data}`);
-    
-    // Restart on detected status codes in stderr
-    if (scriptName === 'index.js' && (data.includes("408") || data.includes("503"))) {
-      restartIndex(data);
+
+    // Extract potential error codes from the output
+    const match = data.toString().match(/\b\d{3}\b/); // Extracts any 3-digit number
+    if (match) {
+      const statusCode = parseInt(match[0], 10);
+      if (scriptName === 'index.js' && statusCode !== 515) {
+        restartIndex(statusCode);
+      }
     }
   });
 
-  // Handle process exit (for restarting or handling crashes)
+  // Handle process exit
   process.on('exit', (code, signal) => {
     if (code !== 0) {
       logOutput(scriptName, `Process exited with code: ${code}`);
@@ -66,10 +79,12 @@ function startApp(scriptName, onExit) {
       logOutput(scriptName, `Process was killed with signal: ${signal}`);
     }
 
-    // Restart index.js if it crashes
-    if (scriptName === 'index.js') {
+    // Restart index.js if it crashes (except for code 515)
+    if (scriptName === 'index.js' && code !== 515) {
       logOutput(scriptName, `Restarting index.js...`);
       startApp('index.js', onExit);
+    } else if (scriptName === 'index.js' && code === 515) {
+      logOutput(scriptName, `Index.js exited with code 515. Not restarting.`);
     } else {
       // Restart server.js if it crashes
       logOutput(scriptName, `Restarting server.js...`);
@@ -89,10 +104,10 @@ startApp('index.js', () => {
 // Logs directory cleanup function
 const logsDir = path.join(__dirname, "logs");
 function deleteLogsDir() {
-    if (fs.existsSync(logsDir)) {
-        fs.rmSync(logsDir, { recursive: true, force: true });
-        console.log("🗑️ Logs directory deleted.");
-    }
+  if (fs.existsSync(logsDir)) {
+    fs.rmSync(logsDir, { recursive: true, force: true });
+    console.log("🗑️ Logs directory deleted.");
+  }
 }
 
 // Listen for process exit signals
@@ -100,19 +115,19 @@ process.on('exit', () => {
   deleteLogsDir();
 });
 process.on("SIGINT", () => { // Ctrl + C
-    console.log("\n⚠️ Process interrupted (SIGINT)");
-    deleteLogsDir();
-    process.exit(0);
+  console.log("\n⚠️ Process interrupted (SIGINT)");
+  deleteLogsDir();
+  process.exit(0);
 });
 process.on("SIGTERM", () => { // Kill command
-    console.log("\n⚠️ Process terminated (SIGTERM)");
-    deleteLogsDir();
-    process.exit(0);
+  console.log("\n⚠️ Process terminated (SIGTERM)");
+  deleteLogsDir();
+  process.exit(0);
 });
 process.on("uncaughtException", (err) => { // Unhandled error
-    console.error("❌ Uncaught Exception:", err);
-    deleteLogsDir();
-    process.exit(1);
+  console.error("❌ Uncaught Exception:", err);
+  deleteLogsDir();
+  process.exit(1);
 });
 process.on('beforeExit', () => {
   deleteLogsDir();
