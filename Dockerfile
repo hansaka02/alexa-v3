@@ -30,5 +30,5 @@ COPY . .
 # Expose the application port
 EXPOSE 4001
 
-# Use the virtual environment to run the application
-CMD ["/env/bin/npm", "start"]
+# Run the application (use the system `npm` rather than the virtual environment)
+CMD ["npm", "start"]
