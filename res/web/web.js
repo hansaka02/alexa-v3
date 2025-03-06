@@ -6,7 +6,7 @@ function getSearchResults(query) {
   return new Promise((resolve, reject) => {
     const pythonPath = path.join(__dirname, 'env', 'bin', 'python'); // Virtual environment's Python path
 
-    const pythonProcess = spawn(pythonPath, ['web.py', query]);
+    const pythonProcess = spawn(pythonPath, ['/res/web/web.py', query]);
 
     let data = '';
     let errorData = '';
