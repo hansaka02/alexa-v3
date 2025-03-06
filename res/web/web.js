@@ -1,24 +1,12 @@
-const { spawn , execSync } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const path = require('path');
 
 // Function to query Python script
 function getSearchResults(query) {
   return new Promise((resolve, reject) => {
-    const pythonPath = path.join(__dirname, 'env', 'bin', 'python'); // Linux/macOS
-    // const pythonPath = path.join(__dirname, 'myenv', 'Scripts', 'python.exe'); // Windows
-let pythonExecutable;
+    const pythonPath = path.join(__dirname, 'env', 'bin', 'python'); // Virtual environment's Python path
 
-// Check if 'python' exists, otherwise fallback to 'python3'
-try {
-  execSync('command -v python');  // Will throw an error if python is not found
-  pythonExecutable = 'python';
-} catch (error) {
-  pythonExecutable = 'python3';
-}
-
-const pythonProcess = spawn(pythonPath, ['web.py', query]);
-
-
+    const pythonProcess = spawn(pythonPath, ['web.py', query]);
 
     let data = '';
     let errorData = '';
@@ -34,7 +22,7 @@ const pythonProcess = spawn(pythonPath, ['web.py', query]);
     pythonProcess.on('close', (code) => {
       if (code === 0) {
         try {
-          //console.log('Raw Python Output:', data);
+          // Assuming the Python script outputs JSON, parse it
           resolve(JSON.parse(data));  // Parse JSON safely
         } catch (parseError) {
           reject(`Error parsing JSON: ${parseError.message}`);
@@ -47,17 +35,17 @@ const pythonProcess = spawn(pythonPath, ['web.py', query]);
 }
 
 // Example usage of the function
-async function websearch_query(query)  {
+async function websearch_query(query) {
   try {
-    
     const searchResults = await getSearchResults(query);
 
     // Clean and format the output
     const cleanedResults = searchResults.map(result => result.replace(/\s+/g, ' ').trim());
 
-    return cleanedResults
+    return cleanedResults;
   } catch (error) {
-    //console.error('Error:', error);
+    console.error('Error:', error);
   }
 }
- module.exports = {websearch_query}
+
+module.exports = { websearch_query };
