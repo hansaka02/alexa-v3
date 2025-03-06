@@ -1,4 +1,4 @@
-const { spawn } = require('child_process');
+const { spawn , execSync } = require('child_process');
 const path = require('path');
 
 // Function to query Python script
