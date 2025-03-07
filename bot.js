@@ -1,4 +1,7 @@
 const fs = require('fs-extra');
+const  YtDl  = require('./res/ytdl');  // Import downloadVideo from ytdl file
+
+const yts = require('yt-search');
 const{weatherof} = require('./res/js/weather.js')
 const path = require('path');
 const si = require('os');
@@ -516,6 +519,130 @@ ${summary}
         AlexaInc.sendMessage(msg.key.remoteJid, { text: error.message || error }, { quoted: msg });
     }
     break;
+}
+
+
+
+case 'yts':{
+if (!text) {
+  AlexaInc.sendMessage(msg.key.remoteJid,{text:'please send with what you want to search'})
+          AlexaInc.sendMessage(msg.key.remoteJid, { react: { text: '☹️', key: msg.key } });
+}else{
+ searchYouTubeMusic(text);
+}
+async function searchYouTubeMusic(query) {
+  try {
+    const results = await yts(query);  // Search YouTube for the query
+    const videos = results.videos;
+
+    AlexaInc.sendMessage(msg.key.remoteJid, {text:`Found ${videos.length} results for "${query}" Here is some results:\n`},{quoted:msg})
+//AlexaInc.sendMessage(msg.key.remoteJid,{text:videoresult},{quoted:msg})
+
+    let preparemsttt = " ";
+    //console.log(`Found ${videos.length} results for "${query}":\n`);
+    AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}})
+    // Display the top 5 results
+    videos.slice(0, 4).forEach((video,index) => {
+const line = '_'.repeat(54)
+const videoresult = `${index+1}. Title: ${video.title}
+   URL: ${video.url}
+   Duration: ${video.timestamp}
+${line}\n\n
+
+if you want to download use command
+.ytdl https://www.youtube.com/watch?v=abc4jso0A3k
+command like this 
+you can coppy link from above
+Hansaka@AlexxaInc © All Right Reserved
+`
+preparemsttt += videoresult
+
+
+    });
+
+    AlexaInc.sendMessage(msg.key.remoteJid,{text:preparemsttt},{quoted:msg})
+  } catch (error) {
+    return('Error searching YouTube :', error);
+  }
+}
+
+break
+}
+
+case 'ytdl': case 'dlyt':{
+
+if (!text) { AlexaInc.sendMessage(msg.key.remoteJid,{text:'url not provided here is ex:- .ytdl https://www.youtube.com/watch?v=abc4jso0A3k '},{quoted:msg})} else {handleDownload(text)}
+
+function extractVideoId(url) {
+    // Improved regex to capture video ID from YouTube URLs
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/[^\n\s]+\/|(?:[^\/\n\s]+\/|(?:v|e(?:mbed)?)\/|(?:watch\?v=|(?:e(?:mbed)?\/)?)|(?:\?v%3D|v%3D))([a-zA-Z0-9_-]{11}))|(?:youtu\.be\/([a-zA-Z0-9_-]{11})))/;
+
+    const match = url.match(regex);
+
+    if (match && (match[1] || match[2])) {
+        return match[1] || match[2]; // Return the video ID
+    } else {
+       //console.error('Invalid YouTube URL');
+        return null; // Invalid URL
+    }
+}
+async function handleDownload(url) {
+    const videoId = extractVideoId(url); // Extract the video ID from the URL
+    
+    if (!videoId) {
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Invalid URL Provided. Here is an example: https://www.youtube.com/watch?v=abc4jso0A3k' }, { quoted: msg });
+        return;
+    }
+
+    try {
+        const result = await YtDl(videoId); // Call downloadVideo function
+
+        if (result[0].downloaded) {
+            const { caption, videoPath } = result[0];
+            
+            // Ensure the file path is correct
+            const videoFilePath = `./temp/${videoId}.mp4`;
+
+            // Check if the file exists using fs-extra
+            const fileExists = await fs.pathExists(videoFilePath);
+            if (!fileExists) {
+                AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Downloaded video file not found.' }, { quoted: msg });
+                return;
+            }
+
+            // Read the file as a Buffer using fs-extra
+            const videoBuffer = await fs.readFile(videoFilePath);
+
+            // Prepare the media object using bailey's API format
+            const mediaMessage = {
+                video: videoBuffer,
+                caption: `${caption}\n Hansaka@AlexxaInc © All Right Reserved`,
+                gifPlayback: false
+            };
+
+            // Send the video using sendMessage
+            AlexaInc.sendMessage(msg.key.remoteJid, mediaMessage, { quoted: msg });
+            //console.log('Video sent:', videoPath);
+
+            //await fs.remove(videoFilePath);  // Deletes the file
+            //console.log('Video file deleted:', videoFilePath);
+
+        } else {
+            AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Failed to download video. Check if the URL is correct.' }, { quoted: msg });
+            console.error('Failed to download video');
+        }
+    } catch (error) {
+        console.error('Error downloading video:', error);
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Error downloading video. Please try again later.' }, { quoted: msg });
+    }finally {
+        // Delete the file regardless of success or failure
+        const videoFilePath = `./temp/${videoId}.mp4`;
+        await fs.remove(videoFilePath);
+        //console.log('Video file deleted:', videoFilePath);
+    }
+}
+
+  break
 }
 
 
