@@ -4,6 +4,7 @@
     "description": "by hansaka",
     "main": "index.js",
     "scripts": {
+         "build": "sudo apt update && sudo apt install -y software-properties-common speedtest-cli python3 python3-venv python3-pip && sudo apt clean && sudo rm -rf /var/lib/apt/lists/* && npm install --only=production && npm install pm2 -g",
         "test": "sudo systemctl start mariadb && sudo systemctl status mariadb",
         "start": "node app"
     },
