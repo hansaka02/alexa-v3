@@ -549,18 +549,19 @@ const videoresult = `${index+1}. Title: ${video.title}
    Duration: ${video.timestamp}
 ${line}\n\n
 
-if you want to download use command
-.ytdl https://www.youtube.com/watch?v=abc4jso0A3k
-command like this 
-you can coppy link from above
-Hansaka@AlexxaInc © All Right Reserved
+
 `
 preparemsttt += videoresult
 
 
     });
 
-    AlexaInc.sendMessage(msg.key.remoteJid,{text:preparemsttt},{quoted:msg})
+    AlexaInc.sendMessage(msg.key.remoteJid,{text:`${preparemsttt}\n
+    if you want to download use command
+.ytdl https://www.youtube.com/watch?v=abc4jso0A3k
+command like this 
+you can coppy link from above
+Hansaka@AlexxaInc © All Right Reserved`},{quoted:msg})
   } catch (error) {
     return('Error searching YouTube :', error);
   }
