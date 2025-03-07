@@ -10,7 +10,8 @@ async function downloadVideo(videoId) {
 
         // Fetch metadata including title and duration
         const videoInfo = await youtubedl(`https://www.youtube.com/watch?v=${videoId}`, {
-            dumpSingleJson: true
+            dumpSingleJson: true,
+                        cookies: path.join(__dirname, 'cookies.txt')
         });
 
         // Extract title and playtime (duration)
