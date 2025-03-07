@@ -22,6 +22,7 @@ async function downloadVideo(videoId) {
         await youtubedl(`https://www.youtube.com/watch?v=${videoId}`, {
             output: savePath,  // Specify download path
             format: 'mp4',     // Ensure MP4 format
+            cookies: path.join(__dirname, 'cookies.txt')
         });
 
         // Construct caption message
