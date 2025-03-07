@@ -6,16 +6,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 RUN apt update \
     && apt install -y software-properties-common speedtest-cli \
-    && apt install -y python3 python3-venv python3-pip \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment
-RUN python3 -m venv /api/res/web/env
 
-# Activate the virtual environment and install Python packages
-RUN /api/res/web/env/bin/pip install --upgrade pip \
-    && /api/res/web/env/bin/pip install googlesearch-python beautifulsoup4 requests
 
 # Set working directory
 WORKDIR /api
