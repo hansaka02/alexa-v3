@@ -1,5 +1,4 @@
 const fs = require('fs');
-const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -30,64 +29,71 @@ function logOutput(scriptName, type, data) {
 
 // Function to start a given script
 function startApp(scriptName, onExit) {
-  const process = spawn('node', [scriptName]);
+  const child = spawn('node', [scriptName]);
 
+  // Helper function to restart index.js unless it's 515
   const restartIndex = (statusCode) => {
     if (statusCode !== 515) {
-      logOutput(scriptName, `Status Code ${statusCode} detected. Restarting index.js...`);
-      process.kill(); // Kill the current process before restarting
+      logOutput(scriptName, `Detected status code: ${statusCode}. Restarting index.js...`, '');
+      child.kill(); // Kill the current process before restarting
       startApp('index.js', onExit);
     } else {
-      logOutput(scriptName, `Status Code 515 detected. Not restarting index.js.`);
+      logOutput(scriptName, `Detected status code: 515. NOT restarting index.js.`, '');
     }
   };
 
-  // Capture stdout data
-  process.stdout.on('data', (data) => {
-    logOutput(scriptName, 'stdout:', `${data}`);
+  // Capture stdout
+  child.stdout.on('data', (data) => {
+    const line = data.toString().trim();
+    logOutput(scriptName, 'stdout:', line);
 
-    // Extract potential error codes from the output
-    const match = data.toString().match(/\b\d{3}\b/); // Extracts any 3-digit number
-    if (match) {
-      const statusCode = parseInt(match[0], 10);
-      if (scriptName === 'index.js' && statusCode !== 515) {
-        restartIndex(statusCode);
+    if (scriptName === 'index.js') {
+      // Convert line to integer
+      const code = parseInt(line, 10);
+
+      // If it's a valid number and not 515, restart
+      if (!isNaN(code) && code !== 515) {
+        restartIndex(code);
       }
     }
   });
 
-  // Capture stderr data
-  process.stderr.on('data', (data) => {
-    logOutput(scriptName, 'stderr:', `${data}`);
+  // Capture stderr
+  child.stderr.on('data', (data) => {
+    const line = data.toString().trim();
+    logOutput(scriptName, 'stderr:', line);
 
-    // Extract potential error codes from the output
-    const match = data.toString().match(/\b\d{3}\b/); // Extracts any 3-digit number
-    if (match) {
-      const statusCode = parseInt(match[0], 10);
-      if (scriptName === 'index.js' && statusCode !== 515) {
-        restartIndex(statusCode);
+    if (scriptName === 'index.js') {
+      // Convert line to integer
+      const code = parseInt(line, 10);
+
+      // If it's a valid number and not 515, restart
+      if (!isNaN(code) && code !== 515) {
+        restartIndex(code);
       }
     }
   });
 
   // Handle process exit
-  process.on('exit', (code, signal) => {
+  child.on('exit', (code, signal) => {
     if (code !== 0) {
-      logOutput(scriptName, `Process exited with code: ${code}`);
+      logOutput(scriptName, `Process exited with code: ${code}`, '');
     }
     if (signal) {
-      logOutput(scriptName, `Process was killed with signal: ${signal}`);
+      logOutput(scriptName, `Process was killed with signal: ${signal}`, '');
     }
 
-    // Restart index.js if it crashes (except for code 515)
-    if (scriptName === 'index.js' && code !== 515) {
-      logOutput(scriptName, `Restarting index.js...`);
-      startApp('index.js', onExit);
-    } else if (scriptName === 'index.js' && code === 515) {
-      logOutput(scriptName, `Index.js exited with code 515. Not restarting.`);
+    // If index.js crashed, restart it unless code is 515
+    if (scriptName === 'index.js') {
+      if (code === 515) {
+        logOutput(scriptName, 'index.js exited with code 515. NOT restarting.', '');
+      } else {
+        logOutput(scriptName, 'index.js exited. Restarting...', '');
+        startApp('index.js', onExit);
+      }
     } else {
-      // Restart server.js if it crashes
-      logOutput(scriptName, `Restarting server.js...`);
+      // If server.js crashed, restart server.js
+      logOutput(scriptName, 'server.js exited. Restarting...', '');
       startApp('server.js', onExit);
     }
 
@@ -95,20 +101,43 @@ function startApp(scriptName, onExit) {
   });
 }
 
-// Start both index.js and server.js and keep them running independently
-startApp('server.js'); // Keep server.js running independently
+// Start both scripts
+startApp('server.js');
 startApp('index.js', () => {
-  // If index.js crashes, this callback can be used to log additional actions or stop server.js if needed.
+  // Callback if index.js crashes
 });
 
-// Logs directory cleanup function
-const logsDir = path.join(__dirname, "logs");
+// Logs directory cleanup
+const logsDir = path.join(__dirname, 'logs');
 function deleteLogsDir() {
   if (fs.existsSync(logsDir)) {
     fs.rmSync(logsDir, { recursive: true, force: true });
-    console.log("🗑️ Logs directory deleted.");
+    console.log('🗑️ Logs directory deleted.');
   }
 }
+
+process.on('exit', () => {
+  deleteLogsDir();
+});
+process.on('SIGINT', () => {
+  console.log('\n⚠️ Process interrupted (SIGINT)');
+  deleteLogsDir();
+  process.exit(0);
+});
+process.on('SIGTERM', () => {
+  console.log('\n⚠️ Process terminated (SIGTERM)');
+  deleteLogsDir();
+  process.exit(0);
+});
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  deleteLogsDir();
+  process.exit(1);
+});
+process.on('beforeExit', () => {
+  deleteLogsDir();
+  console.log('index.js stopped, data set to null');
+});
 
 // Listen for process exit signals
 process.on('exit', () => {
