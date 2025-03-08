@@ -557,8 +557,8 @@ preparemsttt += videoresult
     });
 
     AlexaInc.sendMessage(msg.key.remoteJid,{text:`${preparemsttt}\n
-    if you want to download use command
-.ytdl https://www.youtube.com/watch?v=abc4jso0A3k
+    if you seach about song\nyou can download it
+.ytdl link/of/song
 command like this 
 you can coppy link from above
 Hansaka@AlexxaInc © All Right Reserved`},{quoted:msg})
@@ -602,7 +602,7 @@ async function handleDownload(url) {
             const { caption, videoPath } = result[0];
             
             // Ensure the file path is correct
-            const videoFilePath = `./temp/${videoId}.mp4`;
+            const videoFilePath = `./temp/${videoId}.mp3`;
 
             // Check if the file exists using fs-extra
             const fileExists = await fs.pathExists(videoFilePath);
@@ -616,9 +616,10 @@ async function handleDownload(url) {
 
             // Prepare the media object using bailey's API format
             const mediaMessage = {
-                video: videoBuffer,
-                caption: `${caption}\n Hansaka@AlexxaInc © All Right Reserved`,
-                gifPlayback: false
+                document: {url:`./temp/${videoId}.mp3`},
+                caption: `${caption}\nRes:${text}\n\nThis is just a audio file\n\n~~~Hansaka@AlexxaInc © Reserved~~~`,
+                mimetype:'audio/mpeg'
+                //gifPlayback: false
             };
 
             // Send the video using sendMessage
@@ -637,7 +638,7 @@ async function handleDownload(url) {
         AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Error downloading video. Please try again later.' }, { quoted: msg });
     }finally {
         // Delete the file regardless of success or failure
-        const videoFilePath = `./temp/${videoId}.mp4`;
+        const videoFilePath = `./temp/${videoId}.mp3`;
         await fs.remove(videoFilePath);
         //console.log('Video file deleted:', videoFilePath);
     }
@@ -645,6 +646,8 @@ async function handleDownload(url) {
 
   break
 }
+
+
 
 
 default :{
