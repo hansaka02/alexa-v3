@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install dependencies
 RUN apt update \
     && apt install -y software-properties-common speedtest-cli \
+    && apt install -y ffmpeg \
     && apt clean \
     && rm -rf /var/lib/apt/lists/*
 
