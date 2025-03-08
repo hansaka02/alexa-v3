@@ -135,7 +135,10 @@
     <!-- Navbar -->
     <div class="navbar">
         <h1 onclick="location.href='./';">Alexa v3</h1>
-        <button class="login-button" onclick="logout()">Logout</button>
+                <span> 
+          <button class="login-button" onclick="logout()">Logout</button>
+<button class="login-button" id="downloadButton">DUD</button>
+</span>
     </div>
 <div class="content">
 
@@ -440,7 +443,31 @@
     // Poll for new stats every 500ms
     setInterval(fetchsysStats, 100);
     fetchsysStats();
-
+        // When the download button is clicked
+        document.getElementById('downloadButton').addEventListener('click', function() {
+            // Make an HTTP GET request to download users.json
+            fetch('/download-users-json')
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();  // Get the file as a Blob
+                    } else {
+                        alert('Failed to download file');
+                    }
+                })
+                .then(blob => {
+                    // Create an anchor element to trigger the download
+                    const a = document.createElement('a');
+                    const url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = 'users.json'; // File name to save as
+                    a.click();
+                    window.URL.revokeObjectURL(url); // Clean up
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while downloading the file.');
+                });
+        });
 
     </script>
 </body>
