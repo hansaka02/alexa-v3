@@ -94,6 +94,25 @@ app.get('/control', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'control.html'));
 });
 
+
+
+// Route to download users.json file
+app.get('/download-users-json', (req, res) => {
+    const filePath = path.join(__dirname, './users.json');  // Path to your users.json file
+    
+    // Check if the file exists
+    if (fs.existsSync(filePath)) {
+        res.download(filePath, 'users.json', (err) => {
+            if (err) {
+                res.status(500).json({ error: 'Failed to download the file' });
+            }
+        });
+    } else {
+        res.status(404).json({ error: 'File not found' });
+    }
+});
+
+
 // Serve login page
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
