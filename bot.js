@@ -4,7 +4,6 @@ const USER_DATA_FILE = './users.json';
 const yts = require('yt-search');
 const{weatherof} = require('./res/js/weather.js')
 const path = require('path');
-const simpleGit = require('simple-git');
 const si = require('os');
 const axios = require('axios');
 const sharp = require('sharp');
