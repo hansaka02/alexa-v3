@@ -1,9 +1,10 @@
 const fs = require('fs-extra');
 const  YtDl  = require('./res/ytdl');  // Import downloadVideo from ytdl file
-
+const USER_DATA_FILE = './users.json';
 const yts = require('yt-search');
 const{weatherof} = require('./res/js/weather.js')
 const path = require('path');
+const simpleGit = require('simple-git');
 const si = require('os');
 const axios = require('axios');
 const sharp = require('sharp');
@@ -31,6 +32,68 @@ const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
 const DB_PORT = process.env["DB_PORT"] || 3306 ;
 const {isUrl} = require('./res/js/func')
+
+
+
+function loadUsers() {
+  try {
+      const data = fs.readFileSync(USER_DATA_FILE, 'utf8');
+      return JSON.parse(data);
+  } catch (error) {
+      //console.error("Error loading user data:", error);
+      return { users: {} };  // Return an empty object if file doesn't exist
+  }
+}
+
+// Save user data to JSON file
+function saveUsers(data) {
+  fs.writeFileSync(USER_DATA_FILE, JSON.stringify(data, null, 4), 'utf8');
+  console.log("User data saved:", data);
+}
+
+function getLevel(userId) {
+  const data = loadUsers();
+
+  if (!data.users[userId]) {
+      data.users[userId] = { level: 1, xp: 0, xp_needed: 100 };
+  }
+
+  return data.users[userId].level;
+}
+
+
+
+function addXP(userId) {
+  const data = loadUsers();
+
+  // If the user doesn't exist, create a new entry
+  if (!data.users[userId]) {
+      data.users[userId] = { level: 1, xp: 0, xp_needed: 100 };
+  }
+
+  // Add 5 XP to the user
+  data.users[userId].xp += 5;
+
+  // Check if the user needs to level up
+  while (data.users[userId].xp >= data.users[userId].xp_needed) {
+      // Level up
+      data.users[userId].xp -= data.users[userId].xp_needed;
+      data.users[userId].level += 1;
+      // Increase xp_needed for next level (e.g., 20% more XP needed per level)
+      data.users[userId].xp_needed = Math.floor(data.users[userId].xp_needed * 1.2);
+  }
+
+  saveUsers(data);
+  return `XP: ${data.users[userId].xp}/${data.users[userId].xp_needed} | Level: ${data.users[userId].level}`;
+}
+
+
+
+
+
+
+
+
 function generateWeatherSummary(temperature, windspeed, winddirection) {
     // Define the temperature description
     let temperatureDesc;
@@ -123,6 +186,9 @@ function getGreeting() {
            (hour >= 17 && hour < 20) && "Good Evening 🌆" ||
            "Good Night 🌙";
 }
+
+
+
 
 // Create MySQL connection
 const db = mysql.createConnection({
@@ -283,27 +349,109 @@ fs.ensureDirSync(TEMP_DIR);
 async function handleMessage(AlexaInc, { messages, type }) {
 
 
-     AlexaInc.sendListMsg = (jid, text = '', footer = '', title = '' , butText = '', sects = [], quoted) => {
-        let sections = sects
-        var listMes = {
-        text: text,
-        footer: footer,
-        title: title,
-        buttonText: butText,
-        sections
-        }
-        AlexaInc.sendMessage(jid, listMes, { quoted: quoted })
-        }                  
+                  
       
     if (type === 'notify') {
         const msg = messages[0];
        // console.warn(messages[0])
 let sender = msg.key.remoteJid; // Default sender
+let senderabfff = msg.key.remoteJid;
 const senderdef = msg.key.remoteJid;
 // Check if the message is from a group or a broadcast list
 if (sender.endsWith('@g.us') || sender.endsWith('@broadcast')) {
+    senderabfff = msg.key.participant;
     sender = `${msg.key.participant}@${senderdef}`; // Assign participant ID instead
 }
+addXP(senderabfff);
+
+const cpuData = await si.cpus()[0].model;
+const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
+const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
+const roleuser = (process.env['Owner_nb'] + '@s.whatsapp.net') === sender ? 'Owner' : 'User';
+let menu = `
+╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
+┃                        🎀  𝒜𝐿𝐸𝒳𝒜 - 𝓥3 🎀                         ┃
+┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃
+┃
+┃🖥️ : ${cpuData}
+┃💾 𝐑𝐚𝐦 : ${memUsed} GB of ${memTotal}
+┃
+┃  𝗛𝗲𝗹𝗹𝗼, *${msg.pushName}* ${getGreeting()} 🌙
+┃
+┃ ✧ ʟɪᴍɪᴛ: *no limit enjoy* 
+┃ ✧ ʀᴏʟᴇ: *${roleuser}*  
+┃ ✧ ʟᴇᴠᴇʟ: *${getLevel(senderabfff)}*
+┃ ✧ ᴅᴀʏ: *${moment.tz('Asia/Colombo').format('dddd')}*,  
+┃ ✧ ᴅᴀᴛᴇ: *${moment.tz('Asia/Colombo').format('MMMM Do YYYY')}*  
+┃ ✧ ᴛɪᴍᴇ: *${moment.tz('Asia/Colombo').format('HH:mm:ss')}*
+┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                     📜  𝗖𝗢𝗠𝗠𝗔𝗡𝗗𝗦 𝗟𝗜𝗦𝗧                      ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃
+┃ 🛠 *Utility Commands:*  
+┃ ➥ .menu - Get this menu  
+┃ ➥ .ping - Check bot status  
+┃ ➥ .weather <city> - Get weather info  
+┃ ➥ .owner  - Chat with Owner  
+┃
+┃ 🖼 *Sticker & Image Commands:*  
+┃ ➥ .sticker - Convert image to sticker  
+┃
+┃ 🌐 *Web & Search Commands:*  
+┃ ➥ .web - Search on the web  
+┃ ➥ .browse - Search on the web  
+┃ ➥ .search - Search on the web  
+┃
+┃ 🎥 *YouTube Commands:*  
+┃ ➥ .yts - Search YouTube  
+┃ ➥ .ytdl - Download MP3 from YouTube  
+┃
+┃ 🔞 *NSFW Commands:*  
+┃ ➥ .anal                ➥ .ass  
+┃ ➥ .boobs            ➥ .gonewild  
+┃ ➥ .hanal              ➥ .hass  
+┃ ➥ .hboobs          ➥ .hentai  
+┃ ➥ .hkitsune        ➥ .hmidriff  
+┃ ➥ .hneko             ➥ .hthigh  
+┃ ➥ .neko               ➥ .paizuri  
+┃ ➥ .pgif                 ➥ .pussy  
+┃ ➥ .tentacle          ➥ .thigh  
+┃ ➥ .yaoi  
+┃
+┃ 🌸 *SFW Commands:*  
+┃ ➥ .coffee  
+┃ ➥ .food  
+┃ ➥ .holo  
+┃ ➥ .kanna  
+┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                         🎀  𝒜𝐿𝐸𝒳𝒜 - 𝓥3 🎀                        ┃
+┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
+┃                © 2025 Hansaka @ AlexaInc                  ┃
+╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+
+`;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         if (!msg.key.fromMe) {
                 AlexaInc.readMessages([msg.key]);
@@ -341,52 +489,13 @@ messageText = msg.message?.conversation ||
         let command = firstWord.slice(1);; // Assign as command
 
 
-    const cpuData = await si.cpus()[0].model;
-const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
-const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
 
             // command handle
             switch (command){
             case"menu":{
- const roleuser =   ( sender = process.env['Owner_nb']+'@s.whatsapp.net') && "Owner" || "User"
-
- const menu = `
-
-╭━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
-┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
-┃
-┃🖥️ : ${cpuData}
-┃   𝐑𝐚𝐦 :${memUsed}  GB of , ${memTotal}
-┃
-┃    *Hello*, *${msg.pushName}* *${getGreeting()}*
-┃
-┃ *✧ʟɪᴍɪᴛ: *
-┃ *✧ʀᴏʟᴇ: ${roleuser}*
-┃ *✧ʟᴇᴠᴇʟ:* 
-┃ *✧ᴄᴀʟᴇɴᴅᴀʀ:* *${moment.tz('Asia/Colombo').format('dddd')}*, *${moment.tz('Asia/Colombo').format('MMMM Do YYYY')}* 
-┃ *✧ᴛɪᴍᴇ:* *${moment.tz('Asia/Colombo').format('HH:mm:ss')}*
-┃ 
-┃ 
-┃     *📜 COMMANDS LIST*
-┃  .help - Get this menu
-┃  .ping - Check bot status
-┃  .weather <city> - Get weather info
-┃  .sticker - Convert image to sticker
-┃  .owner  - Chat with Owner
-┃  .web  - search on web
-┃  .browse  - search on web
-┃  .search  - search on web
-┃ 
-┃     ↣𝐘𝐨𝐮𝐭𝐮𝐛𝐞↢ 
-┃
-┃
-┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
-┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
-╰━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
 
-`
+
 
                 AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/alexa.jpeg'},caption: menu},{ quoted: msg });
 
@@ -647,6 +756,98 @@ async function handleDownload(url) {
   break
 }
 
+case 'anal': case 'ass': case 'boobs': case 'gonewild': case 'hanal': case 'hass': case 'hboobs': case 'hentai': case 'hkitsune': case 'hmidriff': case 'hneko': case 'hthigh': case 'neko': case 'paizuri': case 'pgif': case 'pussy': case 'tentacle': case 'thigh': case 'yaoi':
+{
+
+  axios.get(`https://api.night-api.com/images/nsfw/${command}`, {
+    headers: {
+        authorization: process.env.NIGHTAPI_AUTH
+    }
+})
+.then(function (response) {
+    const imageUrl = response.data.content.url;
+    const imagesavepath = `./temp/${response.data.content.id}`;
+    const writer = fs.createWriteStream(path.join(__dirname, imagesavepath));
+
+    axios({
+        url: imageUrl,
+        method: 'GET',
+        responseType: 'stream'
+    }).then((imageResponse) => {
+        imageResponse.data.pipe(writer);
+        writer.on('finish', () => {
+
+          AlexaInc.sendMessage(msg.key.remoteJid,    { 
+            image: {
+                url: imagesavepath
+            },
+            viewOnce: true,
+            caption: `🤤`
+        },{quoted:msg});
+
+        fs.remove(imagesavepath)
+        .then(() => {
+            console.log('Image deleted successfully');
+        })
+        .catch(err => {
+            console.log('Error deleting the image:', err);
+        });
+
+        } );
+    }).catch(err => {console.log('Error downloading the image:', err)});
+})
+.catch(function (error) {
+    AlexaInc.sendMessage(msg.key.remoteJid,{text:'Cant send now i will send later'},{quoted:msg});
+}  );
+
+  break
+}
+
+case 'coffee': case 'food': case 'holo': case 'kanna':
+  {
+
+    axios.get(`https://api.night-api.com/images/sfw/${command}`, {
+      headers: {
+          authorization: process.env.NIGHTAPI_AUTH
+      }
+  })
+  .then(function (response) {
+      const imageUrl = response.data.content.url;
+      const imagesavepath = `./temp/${response.data.content.id}`;
+      const writer = fs.createWriteStream(path.join(__dirname, imagesavepath));
+  
+      axios({
+          url: imageUrl,
+          method: 'GET',
+          responseType: 'stream'
+      }).then((imageResponse) => {
+          imageResponse.data.pipe(writer);
+          writer.on('finish', () => {
+  
+            AlexaInc.sendMessage(msg.key.remoteJid,    { 
+              image: {
+                  url: imagesavepath
+              },
+              caption: `Your ${command} is ready`
+          },{quoted:msg});
+  
+          fs.remove(imagesavepath)
+          .then(() => {
+              console.log('Image deleted successfully');
+          })
+          .catch(err => {
+              console.log('Error deleting the image:', err);
+          });
+  
+          } );
+      }).catch(err => {console.log('Error downloading the image:', err)});
+  })
+  .catch(function (error) {
+      AlexaInc.sendMessage(msg.key.remoteJid,{text:'Cant send now i will send later'},{quoted:msg});
+  }  );
+  
+    break
+  }
 
 
 
@@ -679,53 +880,15 @@ ai(msg.pushName , messageText, sender, async (err, reply) => {
     replyyy = reply.replace("{$var123a$}", msg.pushName);
 }
         const bargs = replyyy.trim().split(/ +/).slice(1);
-        const btext  = bargs.join(" ")
-    const cpuData = await si.cpus()[0].model;
-const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
-const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
+        const btext  = bargs.join(" ");
+
     switch(prosseseb){
 
 case 'menu' : case 'menu.' :{
 
- const roleuser =   ( sender = process.env['Owner_nb']+'@s.whatsapp.net') && "Owner" || "User"
-
- const menu = `
-
-╭━━━━━━━━━━━━━━━━━━━━━━━━━╮
-┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
-┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
-┃
-┃🖥️ : ${cpuData}
-┃   𝐑𝐚𝐦 :${memUsed}  GB of , ${memTotal}
-┃
-┃    *Hello*, *${msg.pushName}* *${getGreeting()}*
-┃
-┃ *✧ʟɪᴍɪᴛ: *
-┃ *✧ʀᴏʟᴇ: ${roleuser}*
-┃ *✧ʟᴇᴠᴇʟ:* 
-┃ *✧ᴄᴀʟᴇɴᴅᴀʀ:* *${moment.tz('Asia/Colombo').format('dddd')}*, *${moment.tz('Asia/Colombo').format('MMMM Do YYYY')}* 
-┃ *✧ᴛɪᴍᴇ:* *${moment.tz('Asia/Colombo').format('HH:mm:ss')}*
-┃ 
-┃ 
-┃     *📜 COMMANDS LIST*
-┃  .help - Get this menu
-┃  .ping - Check bot status
-┃  .weather <city> - Get weather info
-┃  .sticker - Convert image to sticker
-┃  .owner  - Chat with Owner
-┃  .web  - search on web
-┃  .browse  - search on web
-┃  .search  - search on web
-┃ 
-┃     ↣𝐘𝐨𝐮𝐭𝐮𝐛𝐞↢ 
-┃
-┃
-┃━━━━━━━━━━━━━━━━━━━━━━━━━┃
-┃               🎀  𝒜𝐿𝐸𝒳𝒜  🎀
-╰━━━━━━━━━━━━━━━━━━━━━━━━━╯
 
 
-`
+
 
                 AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/alexa.jpeg'},caption: menu},{ quoted: msg });
 
