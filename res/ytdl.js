@@ -1,7 +1,6 @@
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');  // For running FFmpeg commands
 
 // Function to get video info and download video
 async function downloadVideo(vidid) {
@@ -20,22 +19,14 @@ async function downloadVideo(vidid) {
             responseType: 'arraybuffer',  // Specify the response type as binary data
         });
 
-        // Define the video path where we want to save the raw downloaded file
-        const rawVideoFileName = `${vidid}_raw.mp4`;
-        const rawVideoFilePath = path.join(__dirname, '../temp', rawVideoFileName);
+        // Define the video path where we want to save it
+        const videoFileName = `${vidid}.mp3`;
+        const videoFilePath = path.join(__dirname, '../temp', videoFileName);
 
-        // Save the raw video file to the filesystem
-        fs.writeFileSync(rawVideoFilePath, videoResponse.data);
+        // Save the video file to the filesystem
+        fs.writeFileSync(videoFilePath, videoResponse.data);
 
-        // Define the processed video path after re-encoding with FFmpeg
-        const encodedVideoFileName = `${vidid}.mp4`;
-        const encodedVideoFilePath = path.join(__dirname, '../temp', encodedVideoFileName);
-
-        // Step 3: Re-encode the video with FFmpeg
-        await reencodeVideo(rawVideoFilePath, encodedVideoFilePath);
-
-        // Clean up the raw video file after encoding
-        fs.unlinkSync(rawVideoFilePath);
+        //console.log(`Video downloaded successfully: ${videoFilePath}`);
 
         // Create the caption string for the response
         const playTime = formatDuration(duration); // Format duration into "MM:SS"
@@ -45,7 +36,7 @@ async function downloadVideo(vidid) {
         resultArr.push({
             downloaded: true,
             caption: caption,
-            videoPath: encodedVideoFilePath,
+            videoPath: videoFilePath,
         });
 
         return resultArr;
@@ -64,24 +55,6 @@ function formatDuration(seconds) {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-// Function to re-encode the downloaded video using FFmpeg
-function reencodeVideo(inputPath, outputPath) {
-    return new Promise((resolve, reject) => {
-        // FFmpeg command to re-encode the video to H.264 (video) and AAC (audio)
-        const command = `ffmpeg -i "${inputPath}" -c:v libx264 -c:a aac -strict experimental -preset fast -crf 23 "${outputPath}"`;
-
-        // Execute the FFmpeg command
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error re-encoding video: ${stderr}`);
-                reject(error);
-            } else {
-                console.log(`Video re-encoded successfully: ${stdout}`);
-                resolve();
-            }
-        });
-    });
-}
-
 // Example usage
+
 module.exports = downloadVideo;
