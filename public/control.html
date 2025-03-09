@@ -135,9 +135,10 @@
     <!-- Navbar -->
     <div class="navbar">
         <h1 onclick="location.href='./';">Alexa v3</h1>
-                <span> 
+ <span> 
           <button class="login-button" onclick="logout()">Logout</button>
 <button class="login-button" id="downloadButton">DUD</button>
+<button class="login-button" id="downloadButton2">DHD</button>
 </span>
     </div>
 <div class="content">
@@ -460,6 +461,32 @@
                     const url = window.URL.createObjectURL(blob);
                     a.href = url;
                     a.download = 'users.json'; // File name to save as
+                    a.click();
+                    window.URL.revokeObjectURL(url); // Clean up
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while downloading the file.');
+                });
+        });
+
+
+         document.getElementById('downloadButton2').addEventListener('click', function() {
+            // Make an HTTP GET request to download users.json
+            fetch('/download-hangman-json')
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();  // Get the file as a Blob
+                    } else {
+                        alert('Failed to download file');
+                    }
+                })
+                .then(blob => {
+                    // Create an anchor element to trigger the download
+                    const a = document.createElement('a');
+                    const url = window.URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = 'hangman.json'; // File name to save as
                     a.click();
                     window.URL.revokeObjectURL(url); // Clean up
                 })
