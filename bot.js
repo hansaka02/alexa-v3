@@ -4,6 +4,8 @@ const USER_DATA_FILE = './users.json';
 const yts = require('yt-search');
 const{weatherof} = require('./res/js/weather.js')
 const hangmanFile = "./hangman.json";
+const questionsFile = './dailyQuestions.json';
+const QresponsesFile = './dailyqresp.json';
 const path = require('path');
 const si = require('os');
 const axios = require('axios');
@@ -49,6 +51,25 @@ let hangmanData = loadHangmanData();
 // Function to save the Hangman data to the JSON file
 function saveHangmanData(data) {
   fs.writeFileSync(hangmanFile, JSON.stringify(data, null, 2));
+}
+function loadquestionsss() {
+  if (!fs.existsSync(questionsFile)) fs.writeFileSync(questionsFile, "{}");
+  return JSON.parse(fs.readFileSync(questionsFile));
+}
+let questionsss = loadquestionsss();
+
+function saveQuestionsData(data) {
+  fs.writeFileSync(questionsFile, JSON.stringify(data, null, 2));
+}
+
+function loadQanAdata() {
+  if (!fs.existsSync(QresponsesFile)) fs.writeFileSync(QresponsesFile, "{}");
+  return JSON.parse(fs.readFileSync(QresponsesFile));
+}
+let QanAdata = loadQanAdata();
+// Function to save the Hangman data to the JSON file
+function saveQanAdata(data) {
+  fs.writeFileSync(QresponsesFile, JSON.stringify(data, null, 2));
 }
 
 // Function to get the leaderboard
@@ -470,7 +491,13 @@ let menu = `╭━━━━━━━━━━━━━━━━━━━━━�
 ┃        ➥ .hangman - to start hangman
 ┃        ➥ .guess - to guess letter
 ┃        ➥ .endhangman - to end game
-┃        ➥ .hangmanlb - get hangman leaderboard
+┃        ➥ .hangmanlb - get hangman leaderboard   
+┃
+┃             _*DailyGiveaway*_
+┃
+┃        ➥ .dailyqa - to start Q&A
+┃        ➥ .answer - send answer number
+┃
 ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                         🎀  𝒜𝐿𝐸𝒳𝒜 - 𝓥3 🎀                        ┃
@@ -676,7 +703,13 @@ ${summary}
     break;
 }
 
+case 'setqst':{
 
+  if (roleuser === 'Owner') {
+    saveQuestionsData(text);
+  }
+break
+}
 
 case 'yts':{
 if (!text) {
@@ -895,7 +928,72 @@ case 'coffee': case 'food': case 'holo': case 'kanna':
     break
   };
 
+case 'dailyqa':{
+  if (!QanAdata[sender]) {
 
+      
+      QanAdata[sender] = {
+          name: msg.pushName,
+          qstasked: 0,
+          answered: 0,
+          answeres:[],
+          incorrect: 0,
+          correct: 0,
+      };
+      const qstasked = QanAdata[sender].qstasked
+      QanAdata[sender].qstasked++;
+      saveQanAdata(QanAdata);
+
+      const qtan = questionsss[qstasked+1]
+
+      const preparedquestion = `${qtan.question}\n1. ${qtan.a1}\n2. ${qtan.a2}\n3. ${qtan.a3}\n4. ${qtan.a4}`
+      AlexaInc.sendMessage(msg.key.remoteJid,{ text: `🎮 *Q&A challange Started!*\n questions: 20\nUse: .answer <number>` },{ quoted: msg });
+      AlexaInc.sendMessage(msg.key.remoteJid,{ text: preparedquestion },{ quoted: msg });
+
+     
+    
+      break;
+  }else{AlexaInc.sendMessage(msg.key.remoteJid,{ text: "⚠️ You already played daily q&a game! try again yesterday."},{ quoted: msg });}
+
+
+  break
+}
+
+case 'answer':{
+
+  if (!QanAdata[sender]){ AlexaInc.sendMessage(msg.key.remoteJid,{ text: "Q&A session curently not activated use `.dailyqa` to active"},{ quoted: msg });}
+ else{
+    QanAdata[sender].answered++
+    const qstasked = QanAdata[sender].qstasked;
+
+
+  if(QanAdata[sender].answered >= 20){
+    QanAdata[sender].answered = 20
+    saveQanAdata(QanAdata);
+    AlexaInc.sendMessage(msg.key.remoteJid,{ text: "⚠️ You are done wait Hansaka will anounce the winner. Correct count"+QanAdata[sender].correct},{ quoted: msg });
+  }else if (QanAdata[sender].answered <= 20){
+
+    const qtan = questionsss[qstasked+1]
+
+    const preparedquestion = `${qtan.question}\n1. ${qtan.a1}\n2. ${qtan.a2}\n1. ${qtan.a3}\n1. ${qtan.a4}`
+    AlexaInc.sendMessage(msg.key.remoteJid,{ text: preparedquestion },{ quoted: msg });
+   
+    QanAdata[sender].qstasked++
+    QanAdata[sender].answeres.push(text)
+  
+
+    console.log(`answer is :${questionsss[qstasked].ca} user say:${args[0]}`)
+    if (questionsss[qstasked].ca==text ) {
+      QanAdata[sender].correct++
+    }else{QanAdata[sender].incorrect++};
+
+  saveQanAdata(QanAdata);
+
+
+  }
+ }
+  break
+}
   case "hangman": {
     // Starting a new Hangman game
     if (hangmanData[sender]) {

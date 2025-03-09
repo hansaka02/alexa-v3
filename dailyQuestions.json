@@ -1,0 +1,163 @@
+{
+    "1": {
+      "question": "What is the national flower of Sri Lanka?",
+      "a1": "Blue Water Lily",
+      "a2": "Lotus",
+      "a3": "Jasmine",
+      "a4": "Rose",
+      "ca": 1
+    },
+    "2": {
+      "question": "Which ocean surrounds Sri Lanka?",
+      "a1": "Atlantic Ocean",
+      "a2": "Pacific Ocean",
+      "a3": "Indian Ocean",
+      "a4": "Arctic Ocean",
+      "ca": 3
+    },
+    "3": {
+      "question": "What is the currency of Sri Lanka?",
+      "a1": "Rupee",
+      "a2": "Dollar",
+      "a3": "Euro",
+      "a4": "Yen",
+      "ca": 1
+    },
+    "4": {
+      "question": "Who is known as the 'Father of the Nation' in Sri Lanka?",
+      "a1": "D. S. Senanayake",
+      "a2": "Ranasinghe Premadasa",
+      "a3": "Mahinda Rajapaksa",
+      "a4": "J. R. Jayewardene",
+      "ca": 1
+    },
+    "5": {
+      "question": "Which is the longest river in Sri Lanka?",
+      "a1": "Mahaweli River",
+      "a2": "Kelani River",
+      "a3": "Walawe River",
+      "a4": "Kalu River",
+      "ca": 1
+    },
+    "6": {
+      "question": "What is the national sport of Sri Lanka?",
+      "a1": "Cricket",
+      "a2": "Volleyball",
+      "a3": "Rugby",
+      "a4": "Football",
+      "ca": 2
+    },
+    "7": {
+      "question": "Which city is known as the 'Sacred City' in Sri Lanka?",
+      "a1": "Kandy",
+      "a2": "Anuradhapura",
+      "a3": "Polonnaruwa",
+      "a4": "Jaffna",
+      "ca": 2
+    },
+    "8": {
+      "question": "What is the national animal of Sri Lanka?",
+      "a1": "Leopard",
+      "a2": "Lion",
+      "a3": "Elephant",
+      "a4": "Peacock",
+      "ca": 2
+    },
+    "9": {
+      "question": "What is the highest mountain in Sri Lanka?",
+      "a1": "Adam’s Peak",
+      "a2": "Pidurutalagala",
+      "a3": "Kirigalpotta",
+      "a4": "Namunukula",
+      "ca": 2
+    },
+    "10": {
+      "question": "Which is the largest national park in Sri Lanka?",
+      "a1": "Yala National Park",
+      "a2": "Udawalawe National Park",
+      "a3": "Wilpattu National Park",
+      "a4": "Minneriya National Park",
+      "ca": 3
+    },
+    "11": {
+      "question": "Which Sri Lankan king built the Sigiriya Rock Fortress?",
+      "a1": "King Dutugemunu",
+      "a2": "King Parakramabahu",
+      "a3": "King Kashyapa",
+      "a4": "King Vijayabahu",
+      "ca": 3
+    },
+    "12": {
+      "question": "Which UNESCO World Heritage site is known as the 'Temple of the Tooth'?",
+      "a1": "Anuradhapura",
+      "a2": "Sigiriya",
+      "a3": "Polonnaruwa",
+      "a4": "Sri Dalada Maligawa",
+      "ca": 4
+    },
+    "13": {
+      "question": "What is the main language spoken in Sri Lanka?",
+      "a1": "English",
+      "a2": "Tamil",
+      "a3": "Sinhala",
+      "a4": "Hindi",
+      "ca": 3
+    },
+    "14": {
+      "question": "What is the name of the Sri Lankan airline?",
+      "a1": "SriLankan Airlines",
+      "a2": "Sri Lanka Airways",
+      "a3": "Ceylon Airways",
+      "a4": "Lanka Air",
+      "ca": 1
+    },
+    "15": {
+      "question": "What is the traditional drum of Sri Lanka called?",
+      "a1": "Tabla",
+      "a2": "Dhol",
+      "a3": "Geta Beraya",
+      "a4": "Mridangam",
+      "ca": 3
+    },
+    "16": {
+      "question": "Which Sri Lankan tea is world-famous?",
+      "a1": "Darjeeling Tea",
+      "a2": "Ceylon Tea",
+      "a3": "Assam Tea",
+      "a4": "Earl Grey Tea",
+      "ca": 2
+    },
+    "17": {
+      "question": "What is the Sri Lankan festival celebrated in April?",
+      "a1": "Vesak",
+      "a2": "Diwali",
+      "a3": "Sinhala and Tamil New Year",
+      "a4": "Poson",
+      "ca": 3
+    },
+    "18": {
+      "question": "Which is the largest lake in Sri Lanka?",
+      "a1": "Beira Lake",
+      "a2": "Parakrama Samudra",
+      "a3": "Gregory Lake",
+      "a4": "Tissa Wewa",
+      "ca": 2
+    },
+    "19": {
+      "question": "What is the traditional Sri Lankan dance form?",
+      "a1": "Kandyan Dance",
+      "a2": "Bharatanatyam",
+      "a3": "Odissi",
+      "a4": "Kathakali",
+      "ca": 1
+    },
+    "20": {
+      "question": "Which Sri Lankan city is known for its Dutch Fort?",
+      "a1": "Colombo",
+      "a2": "Galle",
+      "a3": "Negombo",
+      "a4": "Jaffna",
+      "ca": 2
+    }
+  }
+  
