@@ -110,8 +110,27 @@ app.get('/download-users-json', (req, res) => {
     } else {
         res.status(404).json({ error: 'File not found' });
     }
+
+
+
 });
 
+app.get('/download-hangman-json', (req, res) => {
+    const filePath22 = path.join(__dirname, './hangman.json');
+    
+
+    if (fs.existsSync(filePath22)) {
+        res.download(filePath22, 'hangman.json', (err) => {
+            if (err) {
+                res.status(500).json({ error: 'Failed to download the file' });
+            }
+        });
+    } else {
+        res.status(404).json({ error: 'File not found' });
+    }
+
+
+});
 
 // Serve login page
 app.get('/login', (req, res) => {

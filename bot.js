@@ -3,6 +3,7 @@ const  YtDl  = require('./res/ytdl');  // Import downloadVideo from ytdl file
 const USER_DATA_FILE = './users.json';
 const yts = require('yt-search');
 const{weatherof} = require('./res/js/weather.js')
+const hangmanFile = "./hangman.json";
 const path = require('path');
 const si = require('os');
 const axios = require('axios');
@@ -31,7 +32,46 @@ const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
 const DB_PORT = process.env["DB_PORT"] || 3306 ;
 const {isUrl} = require('./res/js/func')
+const hngmnwrds = [
+  "apple", "banana", "mountain", "ocean", "computer", "city", "dog", "cat", "book", 
+  "window", "coffee", "phone", "table", "chair", "cloud", "rain", "snow", "butterfly",
+  "elephant", "pizza", "icecream", "flower", "chocolate", "guitar", "piano", "camera", 
+  "jungle", "beach", "sunglasses", "umbrella", "garden", "airport", "hospital", "school", 
+  "universe", "planet", "sun", "moon", "star", "television", "sandwich"
+];
 
+// Function to load the Hangman data from the JSON file
+function loadHangmanData() {
+  if (!fs.existsSync(hangmanFile)) fs.writeFileSync(hangmanFile, "{}");
+  return JSON.parse(fs.readFileSync(hangmanFile));
+}
+let hangmanData = loadHangmanData();
+// Function to save the Hangman data to the JSON file
+function saveHangmanData(data) {
+  fs.writeFileSync(hangmanFile, JSON.stringify(data, null, 2));
+}
+
+// Function to get the leaderboard
+function getLeaderboard(hangmanData) {
+  const leaderboard = Object.keys(hangmanData)
+      .map(user => ({
+          user: user,
+          wins: hangmanData[user].wins || 0,
+          name: hangmanData[user].name
+      }))
+      .sort((a, b) => b.wins - a.wins);
+
+  let leaderboardText = "🏆 *Hangman Leaderboard*\n";
+  if (leaderboard.length > 0) {
+      leaderboard.forEach((entry, index) => {
+          leaderboardText += `${index + 1}. ${entry.name} - Wins: ${entry.wins}\n`;
+      });
+  } else {
+      leaderboardText = "No players have won yet!";
+  }
+
+  return leaderboardText;
+}
 
 
 function loadUsers() {
@@ -47,7 +87,7 @@ function loadUsers() {
 // Save user data to JSON file
 function saveUsers(data) {
   fs.writeFileSync(USER_DATA_FILE, JSON.stringify(data, null, 4), 'utf8');
-  console.log("User data saved:", data);
+  //console.log("User data saved:", data);
 }
 
 function getLevel(userId) {
@@ -367,8 +407,7 @@ const cpuData = await si.cpus()[0].model;
 const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
 const memUsed = Math.round(((await si.totalmem()- await si.freemem())/1e+9)*100)/100; 
 const roleuser = (process.env['Owner_nb'] + '@s.whatsapp.net') === sender ? 'Owner' : 'User';
-let menu = `
-╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
+let menu = `╭━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╮
 ┃                        🎀  𝒜𝐿𝐸𝒳𝒜 - 𝓥3 🎀                         ┃
 ┃━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┃
 ┃
@@ -423,13 +462,21 @@ let menu = `
 ┃ ➥ .food  
 ┃ ➥ .holo  
 ┃ ➥ .kanna  
+┃ 
+┃ 🪀 *Games*     
+┃
+┃             _*Hangman*_
+┃
+┃        ➥ .hangman - to start hangman
+┃        ➥ .guess - to guess letter
+┃        ➥ .endhangman - to end game
+┃        ➥ .hangmanlb - get hangman leaderboard
 ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                         🎀  𝒜𝐿𝐸𝒳𝒜 - 𝓥3 🎀                        ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃                © 2025 Hansaka @ AlexaInc                  ┃
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
-
 `;
 
 
@@ -846,7 +893,161 @@ case 'coffee': case 'food': case 'holo': case 'kanna':
   }  );
   
     break
-  }
+  };
+
+
+  case "hangman": {
+    // Starting a new Hangman game
+    if (hangmanData[sender]) {
+      if (hangmanData[sender].word) {
+        AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption: "⚠️ You already have an active game! Use `.guess <letter>` to continue."},{ quoted: msg });
+
+
+        
+      }else{
+        let word = hngmnwrds[Math.floor(Math.random() * hngmnwrds.length)];
+        hangmanData[sender] = {
+            word: word,
+            name: msg.pushName,
+            guessed: [],
+            incorrect: 0,
+            maxIncorrect: 6,
+            wins: hangmanData[sender]?.wins || 0 // Ensure wins persist
+        };
+    
+        saveHangmanData(hangmanData);
+    
+        let hiddenWord = "_ ".repeat(word.length).trim();
+        AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption: `🎮 *Hangman Started!*\n🔹 Word: ${hiddenWord}\n🔹 Lives: 6\nUse: .guess <letter>` },{ quoted: msg });
+
+
+       
+      }
+        break;
+    }
+
+    let word = hngmnwrds[Math.floor(Math.random() * hngmnwrds.length)];
+    hangmanData[sender] = {
+        word: word,
+        name: msg.pushName,
+        guessed: [],
+        incorrect: 0,
+        maxIncorrect: 6,
+        wins: hangmanData[sender]?.wins || 0 // Ensure wins persist
+    };
+
+    saveHangmanData(hangmanData);
+
+    let hiddenWord = "_ ".repeat(word.length).trim();
+    AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption: `🎮 *Hangman Started!*\n🔹 Word: ${hiddenWord}\n🔹 Lives: 6\nUse: .guess <letter>` },{ quoted: msg });
+
+    break;
+}
+
+case "guess": {
+    // Check if the user has an active game
+    if (!hangmanData[sender].word) {
+      AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:  "❌ You don't have an active game! Start a new game with `.hangman`" },{ quoted: msg });
+
+
+        break;
+    }
+
+    let game = hangmanData[sender];
+    let guess = args[0]?.toLowerCase();
+
+    if (!guess || guess.length !== 1) {
+      AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:  "⚠️ Send a single letter!" },{ quoted: msg });
+
+
+        break;
+    }
+
+    if (game.guessed.includes(guess)) {
+      AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:  "🔄 You already guessed that!" },{ quoted: msg });
+
+        break;
+    }
+
+    game.guessed.push(guess);
+
+    if (game.word.includes(guess)) {
+        let revealed = game.word.split("").map(letter => game.guessed.includes(letter) ? letter : "_").join(" ");
+        saveHangmanData(hangmanData);
+
+        if (!revealed.includes("_")) {
+            // Player wins, increase their win count
+            hangmanData[sender].wins++; // Increment win count
+            saveHangmanData(hangmanData); // Save the updated data with win count
+            AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:  `🎉 You won! The word was: *${game.word}*` },{ quoted: msg });
+            // Log game data before deletion
+            console.log("Game Data Before Deletion:", hangmanData[sender]);
+
+            // Allow the player to start a new game after winning
+            AlexaInc.sendMessage(msg.key.remoteJid, { text: "🎮 You can start a new game by typing .hangman" }, { quoted: msg });
+
+            // Explicitly delete only the game-related data (NOT the win count)
+            delete hangmanData[sender].guessed;
+            delete hangmanData[sender].incorrect;
+            delete hangmanData[sender].word;  // Delete word to start a new game
+            saveHangmanData(hangmanData);
+        } else {
+          AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:  `✅ Correct!\n🔹 Word: ${revealed}` },{ quoted: msg });
+            
+           
+        }
+    } else {
+        game.incorrect++;
+        saveHangmanData(hangmanData);
+
+        if (game.incorrect >= game.maxIncorrect) {
+          AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:   `💀 Game Over now you death! The word was: *${game.word}*` },{ quoted: msg });
+            
+      
+            // Log game data before deletion
+            console.log("Game Data Before Deletion:", hangmanData[sender]);
+
+            // Allow the player to start a new game after losing
+            AlexaInc.sendMessage(msg.key.remoteJid, { text: "🎮 You can revive by typing .hangman" }, { quoted: msg });
+
+            // Explicitly delete only the game-related data (NOT the win count)
+            delete hangmanData[sender].guessed;
+            delete hangmanData[sender].incorrect;
+            delete hangmanData[sender].word;  // Delete word to start a new game
+            saveHangmanData(hangmanData);
+        } else {
+          AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:   `❌ Wrong! Lives left: ${game.maxIncorrect - game.incorrect}`  },{ quoted: msg });
+            
+        }
+    }
+    break;
+}
+
+case "endhangman": {
+    // End an active Hangman game
+    if (!hangmanData[sender]) {
+      
+        AlexaInc.sendMessage(msg.key.remoteJid, { text: "❌ No active game to end!" }, { quoted: msg });
+        break;
+    }
+
+    // Reset game data but keep win count
+    delete hangmanData[sender].guessed;
+    delete hangmanData[sender].incorrect;
+    delete hangmanData[sender].word;  // Delete word to start a new game
+    saveHangmanData(hangmanData);
+    AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:   "🛑 Hangman game ended."  },{ quoted: msg });
+           
+    break;
+}
+
+case "hangmanlb": {
+    // Display the leaderboard
+    let leaderboardText = getLeaderboard(hangmanData);
+    AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:   leaderboardText  },{ quoted: msg });
+     
+    break;
+}
 
 
 
