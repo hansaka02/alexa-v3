@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const  YtDl  = require('./res/ytdl');  // Import downloadVideo from ytdl file
 const USER_DATA_FILE = './users.json';
+const fetchnews = require('./res/news');
 const yts = require('yt-search');
 const{weatherof} = require('./res/js/weather.js')
 const hangmanFile = "./hangman.json";
@@ -41,6 +42,12 @@ const hngmnwrds = [
   "jungle", "beach", "sunglasses", "umbrella", "garden", "airport", "hospital", "school", 
   "universe", "planet", "sun", "moon", "star", "television", "sandwich"
 ];
+
+
+
+
+
+
 
 // Function to load the Hangman data from the JSON file
 function loadHangmanData() {
@@ -1145,6 +1152,90 @@ case "hangmanlb": {
     AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/hangman.jpeg'},caption:   leaderboardText  },{ quoted: msg });
      
     break;
+}
+case 'news':{
+  AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '🔄', key: msg.key}});
+fetchnews().then(response=>{
+
+  const message2send = 
+  `\n
+-------------------------------News #01----------------------------------
+
+*Title:* \`${response[0].title}\`
+
+*Description:* \`${response[0].description}\`
+
+*Url:* ${response[0].url}
+
+
+
+-------------------------------News #02----------------------------------
+
+*Title:* \`${response[1].title}\`
+
+*Description:* \`${response[1].description}\`
+
+Url: ${response[1].url}
+
+
+
+-------------------------------News #03----------------------------------
+
+*Title:* \`${response[2].title}\`
+
+*Description:* \`${response[2].description}\`
+
+*Url:* ${response[2].url}
+
+
+
+-------------------------------News #04----------------------------------
+
+*Title:* \`${response[3].title}\`
+
+*Description:* \`${response[3].description}\`
+
+*Url:* ${response[3].url}
+
+
+
+-------------------------------News #05----------------------------------
+
+*Title:* \`${response[4].title}\`
+
+*Description:* \`${response[4].description}\`
+
+*Url:* ${response[4].url}
+
+
+
+-------------------------------News #06----------------------------------
+
+*Title:* \`${response[5].title}\`
+
+*Description:* \`${response[5].description}\`
+
+*Url:* ${response[5].url}
+
+
+
+-------------------------------News #07----------------------------------
+
+*Title:* \`${response[6].title}\`
+
+*Description:* \`${response[6].description}\`
+
+*Url:* ${response[6].url}
+
+
+
+*Note The Original News Resources is Ada Derana 24*
+  `
+  AlexaInc.sendMessage(msg.key.remoteJid,{ image: {url: './res/img/news.jpeg'},caption: message2send    },{ quoted: msg });
+  AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}});
+})
+
+break;
 }
 
 
