@@ -304,7 +304,7 @@ function ai(thread_id_name, message, thread_id, callback) {
 let systemHeader = [                    {
                         role: 'system',
                         content: 
-                       `- *assistant name is alexa, a WhatsApp chatbot created by Hansaka.* \n\n assistant name must be alexa its not virtual assistant or chatbot. when a user send greeting message reply hello ${thread_id_name}.I am your virtual assistant. how can I help you today?.\n\n When a user used weather quary prompt lite what weather loom like or what was weather today to find weather of any city, reply must only be contain  "weather city_name" dont include weather infomations or any other words like"today yesterdat tomorow or any".\n\n When a user asks for a menu message like show me menu what is menu , reply must be one word its 'menu' \n\n When a user asks for ping or system status message like what is system status or  test ping , reply must be include one word its 'ping' \n\n wha a user asks for documentation reply must be include one word its 'doc' \n\n All text formatting must follow WhatsApp text formatting standards. \n\n For any other requests, please respond naturally with helpful, engaging, or creative responses. \n\n The AI should be flexible to handle different queries such as jokes, random facts, small talk, or other general knowledge. \n\n If the user asks for something outside the predefined commands respond naturally and provide an engaging response.`
+                       `- *assistant name is alexa, a WhatsApp chatbot created by Hansaka.* \n\n assistant name must be alexa its not virtual assistant or chatbot. when a user send greeting message reply hello ${thread_id_name}.I am your virtual assistant. how can I help you today?.\n\n When a user used weather quary prompt lite what weather loom like or what was weather today to find weather of any city, reply must only be contain with these words "weather city_name" dont include weather infomations or any other words like"today yesterdat tomorow or any" dont use thext formatting.\n\n When a user asks for a menu message like 'show me menu' 'what is menu' 'bot menu' 'menu' , reply must be one word its 'menu' dont use thext formatting. \n\n When a user asks for ping or system status message like 'what is system status' or  'test ping' , reply must be include one word its 'ping' dont use thext formatting. \n\n wha a user asks for documentation reply must be include one word its 'doc' dont use thext formatting. \n\n All text formatting must follow WhatsApp text formatting standards:. \n\n For any other requests, please respond naturally with helpful, engaging, or creative responses. \n\n The AI should be flexible to handle different queries such as jokes, random facts, small talk, or other general knowledge. \n\n If the user asks for something outside the predefined commands respond naturally and provide an engaging response.`
 
                     } , {role:"assistant", content:"what is your name ?"},{role:"user",content: `${thread_id_name} is my name remember it`}] ;
 
@@ -1263,7 +1263,7 @@ ${summary}
       
       while (attempts < maxRetries) {
           try {
-              const response = await AlexaInc.sendMessage(msg.key.remoteJid, { text: `${replyyy}` }, { quoted: msg });
+              const response = await AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '☹️', key: msg.key}});
               console.log("Message sent successfully:");
               break; // Exit loop if successful
           } catch (error) {
@@ -1278,10 +1278,10 @@ ${summary}
               }
           }
       }
-
-
+      AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}});
+AlexaInc.sendMessage(msg.key.remoteJid, { text: `${replyyy}` }, { quoted: msg });
           //AlexaInc.sendMessage(msg.key.remoteJid,{text:`${replyyy}`},{ quoted: msg });
-          AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}});
+          
     //AlexaInc.readMessages([msg.key]);
  break
     }
