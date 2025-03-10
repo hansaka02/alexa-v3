@@ -1256,9 +1256,34 @@ ${summary}
 
 
     default:{
-          AlexaInc.sendMessage(msg.key.remoteJid,{text:`${replyyy}`},{ quoted: msg });
+
+      let attempts = 0;  // ✅ Use "let" so we can update its value
+      const maxRetries = 3;
+      const delay = 2000;
+      
+      while (attempts < maxRetries) {
+          try {
+              const response = await AlexaInc.sendMessage(msg.key.remoteJid, { text: `${replyyy}` }, { quoted: msg });
+              console.log("Message sent successfully:");
+              break; // Exit loop if successful
+          } catch (error) {
+              console.error(`Failed to send message (Attempt ${attempts + 1}):`, error);
+              attempts++; // ✅ Now this works because "attempts" is mutable
+      
+              if (attempts < maxRetries) {
+                  console.log(`Retrying in ${delay / 1000} seconds...`);
+                  await new Promise(resolve => setTimeout(resolve, delay));
+              } else {
+                  console.error("All retries failed. Message not sent.");
+              }
+          }
+      }
+
+
+          //AlexaInc.sendMessage(msg.key.remoteJid,{text:`${replyyy}`},{ quoted: msg });
           AlexaInc.sendMessage(msg.key.remoteJid,{react: {text: '✅', key: msg.key}});
-    AlexaInc.readMessages([msg.key]);
+    //AlexaInc.readMessages([msg.key]);
+ break
     }
     }
     //console.log('Chatbot Response:', reply);
