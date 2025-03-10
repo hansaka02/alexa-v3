@@ -459,6 +459,7 @@ let menu = `╭━━━━━━━━━━━━━━━━━━━━━�
 ┃ ➥ .menu - Get this menu  
 ┃ ➥ .ping - Check bot status  
 ┃ ➥ .weather <city> - Get weather info  
+┃ ➥ .news - Get last news info  
 ┃ ➥ .owner  - Chat with Owner  
 ┃
 ┃ 🖼 *Sticker & Image Commands:*  
