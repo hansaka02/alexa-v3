@@ -1290,7 +1290,7 @@ case 'welcomeon': {
 
   // Query to update the group settings in the database
   const query = `
-    INSERT INTO groups (group_id, is_welcome, wc_m)
+    INSERT INTO \`groups\` (group_id, is_welcome, wc_m)
     VALUES (?, TRUE, ?)
     ON DUPLICATE KEY UPDATE is_welcome = TRUE, wc_m = ?
   `;
@@ -1314,7 +1314,7 @@ case 'welcomeoff': {
 
   // Query to update the group settings in the database
   const query = `
-    INSERT INTO groups (group_id, is_welcome, wc_m)
+    INSERT INTO \`groups\` (group_id, is_welcome, wc_m)
     VALUES (?, FALSE, ?)
     ON DUPLICATE KEY UPDATE is_welcome = FALSE, wc_m = ?
   `;
