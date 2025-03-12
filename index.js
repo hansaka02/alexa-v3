@@ -93,7 +93,7 @@ fs.readFile('./res/ascii.txt', 'utf8', (err, data) => {
     const {
         state,
         saveCreds
-    } = await useMultiFileAuthState('auth5a');
+    } = await useMultiFileAuthState('./auth5a');
     const {
         version,
         isLatest
@@ -296,17 +296,7 @@ if (connection === 'open') {
             const reason = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.message;
  console.log(reason);
 
-            // if (reason === DisconnectReason.loggedOut) {
-            //     console.log('WhatsApp logged out. Deleting session and restarting...');
-                
-            //     // Delete the authentication folder
-            //     if (fs.existsSync(SESSION_FOLDER)) {
-            //         fs.rmSync(SESSION_FOLDER, { recursive: true, force: true });
-            //     }
 
-            //     // Restart the bot
-            //     startWhatsAppConnection();
-            // }
         } 
     });
 
