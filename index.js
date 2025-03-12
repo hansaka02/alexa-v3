@@ -31,6 +31,28 @@ const DB_NAME = process.env["DB_NAME"];
 const DB_PASS = process.env["DB_PASS"];
 const DB_PORT = process.env["DB_PORT"] || 3306 ;
 
+
+const getBuffer = async (url, options) => {
+    try {
+        options ? options : {}
+        const res = await axios({
+            method: "get",
+            url,
+            headers: {
+                'DNT': 1,
+                'Upgrade-Insecure-Request': 1
+            },
+            ...options,
+            responseType: 'arraybuffer'
+        })
+        return res.data
+    } catch (err) {
+        return err
+    }
+}
+
+
+
 require('./whatsappState'); // Import shared state
 const {
     handleMessage
@@ -190,8 +212,8 @@ const CustomBrowsersMap = {
     
                     // Check if result is found and set wcmsg
                     if (result.length > 0) {
-                        wcmsg = result[0].wc_m;  // Set welcome message from DB
-                        console.log(wcmsg)
+                        wcmsg = result[0].wc_m + '\n' + groupMetadata.desc;  // Set welcome message from DB
+                        //console.log(groupMetadata)
                         isWelcome = true;  // Set welcome flag to true
                     } else {
                         wcmsg = groupMetadata.desc; // Fallback to group description
@@ -200,7 +222,7 @@ const CustomBrowsersMap = {
                     // Fetch the user profile picture as a buffer
                     let buffer;
                     try {
-                        buffer = await axios({ method: "get", url: ppuser, responseType: 'arraybuffer' });
+                        buffer = await getBuffer(ppuser)
                     } catch (error) {
                         console.error('Error fetching profile picture:', error);
                         buffer = null;
@@ -233,7 +255,8 @@ const CustomBrowsersMap = {
                         };
     
                         // Send the image message with the welcome message
-                        await AlexaInc.sendMessage(anu.id, { image: buffer.data }, { quoted: fglink });
+                        he = `Welcome to ${groupMetadata.subject} @${num.split("@")[0]}\n\n ${wcmsg}`
+                        await AlexaInc.sendMessage(anu.id, { image: {url:'./res/img/alexa.jpeg'}, caption:he }, { quoted: fglink });
                     }
                 });
             }
@@ -280,6 +303,9 @@ if (connection === 'open') {
             const ownerNumber = process.env["Owner_nb"];
             if (ownerNumber) {
                 AlexaInc.sendMessage(`${ownerNumber}@s.whatsapp.net`, {
+                    text: 'Your bot Alexa is ready to use now'
+                })
+                AlexaInc.sendMessage('120363407628540320@g.us', {
                     text: 'Your bot Alexa is ready to use now'
                 })
                     .then(() => console.log('Bot started without error'))
