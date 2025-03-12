@@ -428,7 +428,10 @@ const groupOwner = isGroup ? groupMetadata.owner : ''
 //console.log(botNumber)
 const isBotAdmins = isGroup ? groupAdmins.includes(`${botNumber}@s.whatsapp.net`) : false
 const isAdmins = isGroup ? groupAdmins.includes(msg.key.participant) : false
-       
+
+
+
+
 
         //console.log(botNumber) // console.warn(messages[0])
 let sender = msg.key.remoteJid; // Default sender
@@ -440,6 +443,7 @@ if (sender.endsWith('@g.us') || sender.endsWith('@broadcast')) {
     sender = `${msg.key.participant}@${senderdef}`; // Assign participant ID instead
 }
 addXP(senderabfff);
+const isOwner = (process.env['Owner_nb'] + '@s.whatsapp.net') === senderabfff;
 
 const cpuData = await si.cpus()[0].model;
 const memTotal = Math.round(await si.totalmem()/1e+9) +' GB' ;
@@ -466,55 +470,65 @@ let menu = `╭━━━━━━━━━━━━━━━━━━━━━�
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
 ┃
 ┃ 🛠 *Utility Commands:*  
-┃ ➥ .menu - Get this menu  
-┃ ➥ .ping - Check bot status  
-┃ ➥ .weather <city> - Get weather info  
-┃ ➥ .news - Get last news info  
-┃ ➥ .owner  - Chat with Owner  
+┃ ➥ \`.menu\` - Get this menu  
+┃ ➥ \`.ping\` - Check bot status  
+┃ ➥ \`.weather\` <city> - Get weather info  
+┃ ➥ \`.news\` - Get last news info  
+┃ ➥ \`.owner\`  - Chat with Owner  
 ┃
 ┃ 🖼 *Sticker & Image Commands:*  
-┃ ➥ .sticker - Convert image to sticker  
+┃ ➥ \`.sticker\` - Convert image to sticker  
 ┃
 ┃ 🌐 *Web & Search Commands:*  
-┃ ➥ .web - Search on the web  
-┃ ➥ .browse - Search on the web  
-┃ ➥ .search - Search on the web  
+┃ ➥ \`.web\` - Search on the web  
+┃ ➥ \`.browse\` - Search on the web  
+┃ ➥ \`.search\` - Search on the web  
 ┃
 ┃ 🎥 *YouTube Commands:*  
 ┃ ➥ .yts - Search YouTube  
-┃ ➥ .ytdl - Download MP3 from YouTube  
+┃ ➥ .ytdl - Download MP3 from YouTube   
+┃
+┃ 👥 *Groups Commands:*   
+┃ ➥ \`.add\` - .add 94702368937 97897847134 
+┃ ➥ \`.remove\` - .remove also like add  
+┃ ➥ \`.promote\` - also like add 
+┃ ➥ \`.demote\` - also like add  
+┃ ➥ \`.antilink\` - .antilink on/off  
+┃ ➥ \`.antinsfw\` - Similer to antilink  
+┃ ➥ \`.welcomeon\` - to turn on wc msg 
+┃ ➥ \`.welcomeoff\` - to turn off wc msg
 ┃
 ┃ 🔞 *NSFW Commands:*  
-┃ ➥ .anal                ➥ .ass  
-┃ ➥ .boobs            ➥ .gonewild  
-┃ ➥ .hanal              ➥ .hass  
-┃ ➥ .hboobs          ➥ .hentai  
-┃ ➥ .hkitsune        ➥ .hmidriff  
-┃ ➥ .hneko             ➥ .hthigh  
-┃ ➥ .neko               ➥ .paizuri  
-┃ ➥ .pgif                 ➥ .pussy  
-┃ ➥ .tentacle          ➥ .thigh  
-┃ ➥ .yaoi  
+┃ ➥ \`.anal\`                ➥ \`.ass\`  
+┃ ➥ \`.boobs\`            ➥ \`.gonewild\`  
+┃ ➥ \`.hanal\`              ➥ \`.hass\`  
+┃ ➥ \`.hboobs\`          ➥ \`.hentai\`  
+┃ ➥ \`.hkitsune\`        ➥ \`.hmidriff\`  
+┃ ➥ \`.hneko\`             ➥ \`.hthigh\`  
+┃ ➥ \`.neko\`               ➥ \`.paizuri\`  
+┃ ➥ \`.pgif\`                 ➥ \`.pussy\`  
+┃ ➥ \`.tentacle\`          ➥ \`.thigh\`  
+┃ ➥ \`.yaoi\`  
 ┃
 ┃ 🌸 *SFW Commands:*  
-┃ ➥ .coffee  
-┃ ➥ .food  
-┃ ➥ .holo  
-┃ ➥ .kanna  
+┃ ➥ \`.coffee\`  
+┃ ➥ \`.food\`  
+┃ ➥ \`.holo\`  
+┃ ➥ \`.kanna\`  
 ┃ 
 ┃ 🪀 *Games*     
 ┃
 ┃             _*Hangman*_
 ┃
-┃        ➥ .hangman - to start hangman
-┃        ➥ .guess - to guess letter
-┃        ➥ .endhangman - to end game
-┃        ➥ .hangmanlb - get hangman leaderboard   
+┃        ➥ \`.hangman\` - to start hangman
+┃        ➥ \`.guess\` - to guess letter
+┃        ➥ \`.endhangman\` - to end game
+┃        ➥ \`.hangmanlb\` - get hangman leaderboard   
 ┃
 ┃             _*DailyGiveaway*_
 ┃
-┃        ➥ .dailyqa - to start Q&A
-┃        ➥ .answer - send answer number
+┃        ➥ \`.dailyqa\` - to start Q&A
+┃        ➥ \`.answer\` - send answer number
 ┃
 ┃
 ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫
@@ -573,6 +587,128 @@ messageText = msg.message?.conversation ||
 
     // Check if the message has any text to process
     const firstWord = messageText.trim().split(/\s+/)[0].toLowerCase();
+
+
+
+
+
+    
+//// antilink and antinsfw
+
+const nsfwWords = [
+  'porn', 'sex', 'fuck', 'shit', 'ass', 'bitch', 'bastard', 'whore', 'slut',
+  'dick', 'pussy', 'cum', 'fag', 'queer', 'nude', 'nudity', 'sexy', 'masturbate',
+  'tits', 'boobs', 'orgy', 'rape', 'incest', 'bestiality', 'hooker', 'prostitute',
+  'suck', 'blowjob', 'cocksucker', 'dildo', 'vibrator', 'fuckface', 'cock',
+  'clit', 'banging', 'bang', 'bukkake', 'fisting', 'cunnilingus', 'buttplug',
+  'sexually', 'masturbation', 'streaking', 'orgasm', 'sexist', 'dominatrix',
+  'kinky', 'fetish', 'hardcore', 'slutty', 'horny', 'blowjob', 'cuckold', 'pissing',
+  'perversion', 'hardcore', 'strapon', 'twerking', 'gangbang', 'bimbo'
+];
+
+
+async function checkBadWord(msg, messageText) {
+  // Check if it's a group
+  if (!isGroup) return false;
+
+  try {
+    const query = `SELECT * FROM \`groups\` WHERE group_id = ? AND antinsfw = TRUE`;
+    const [results] = await db.promise().query(query, [msg.key.remoteJid]);
+
+    // If the 'antinsfw' setting is enabled for the group
+    if (results.length > 0) {
+      const messageContent = messageText.toLowerCase(); // Ensure to use the message text for checking
+
+      // Check if any NSFW word exists in the message
+      for (let word of nsfwWords) {
+        if (messageContent.includes(word)) {
+          console.log('NSFW content detected!');
+          return true; // NSFW content detected
+        }
+      }
+
+      // No NSFW content detected
+      return false;
+    } else {
+      // 'antinsfw' setting is not enabled for this group
+      return false;
+    }
+  } catch (err) {
+    console.error('Error querying the database:', err);
+    return false; // Return false if there's an error
+  }
+}
+async function checkAntiLink(msg,messageText) {
+  if (!isGroup) return false;
+
+  try {
+    const query = `SELECT * FROM \`groups\` WHERE group_id = ? AND antilink = TRUE`;
+    const [results] = await db.promise().query(query, [msg.key.remoteJid]);
+
+    if (results.length > 0) {
+      const messageContent = messageText.toLowerCase();
+
+      // Improved regex for detecting real links/domains
+      const linkPattern = /\b((https?:\/\/|www\.)[^\s]+|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/[^\s]*)?)\b/gi;
+
+      // Check if message contains a valid link or domain
+      if (linkPattern.test(messageContent)) {
+        console.log('Link detected!');
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    console.error('Error querying the database:', err);
+    return false;
+  }
+}
+
+
+
+
+// Usage:
+
+
+if (await checkBadWord(msg, messageText)) {
+  if (isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are an admin. Lucky You' });
+  if (isOwner) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are the Owner. Lucky You' });
+  AlexaInc.sendMessage(msg.key.remoteJid, { text: '🚫 NSFW content is not allowed in this group!' });
+
+  AlexaInc.sendMessage(msg.key.remoteJid, { delete: msg.key }).then(response=>{
+    AlexaInc.groupParticipantsUpdate(msg.key.remoteJid, [msg.key.participant], 'remove');
+  });
+  return;
+}
+
+// Check for any link (http or https)
+if (await checkAntiLink(msg, messageText)) {
+  if (isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are an admin. Lucky You' });
+  if (isOwner) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are the Owner. Lucky You' });
+  AlexaInc.sendMessage(msg.key.remoteJid, { text: '🚫 Links are not allowed in this group!' });
+  AlexaInc.groupParticipantsUpdate(msg.key.remoteJid, [msg.key.participant], 'remove');
+  AlexaInc.sendMessage(msg.key.remoteJid, { delete: msg.key }).then(response=>{
+    AlexaInc.groupParticipantsUpdate(msg.key.remoteJid, [msg.key.participant], 'remove');
+  });
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
               if (msg.key.remoteJid == 'status@broadcast') {
 
@@ -1331,8 +1467,73 @@ case 'welcomeoff': {
 
   break;
 }
+case 'antilink': {
+  if (!isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'This is not a group!' });
+  if (!isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are not an admin!' });
+  if (!isBotAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'I am not an admin' });
+  if (!args[0] || (args[0] !== 'on' && args[0] !== 'off')) 
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Please send .antilink on/off' });
+
+  const value1 = args[0] === 'on';
+  
+  // Corrected SQL query
+  const query = `
+    INSERT INTO \`groups\` (group_id, antilink)
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE antilink = ?;
+  `;
+
+  // Run the query using MySQL2
+  db.query(query, [msg.key.remoteJid, value1, value1], (err, result) => {
+    if (err) {
+      console.error('Error updating antilink:', err);
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Failed to ' + args[0] + ' antilink' });
+    }
+
+    AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Antilink ' + args[0] + ' successfully!' });
+  });
+
+  break;
+}
+
+case 'antinsfw': {
+  if (!isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'This is not a group!' });
+  if (!isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are not an admin!' });
+  if (!isBotAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'I am not an admin' });
+  if (!args[0] || (args[0] !== 'on' && args[0] !== 'off')) 
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Please send .antilink on/off' });
+
+  const value1 = args[0] === 'on';
+  
+  // Corrected SQL query
+  const query = `
+    INSERT INTO \`groups\` (group_id, antinsfw)
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE antinsfw = ?;
+  `;
+
+  // Run the query using MySQL2
+  db.query(query, [msg.key.remoteJid, value1, value1], (err, result) => {
+    if (err) {
+      console.error('Error updating antinsfw:', err);
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Failed to ' + args[0] + ' antinsfw' });
+    }
+
+    AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Antinsfw ' + args[0] + ' successfully!' });
+  });
+
+  break;
+}
 
 
+case 'hidetag':{
+  if (!isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'This is not a group!' });
+  if (!isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are not an admin!' });
+  if (!isBotAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'I am not an admin' });
+  AlexaInc.sendMessage(msg.key.remoteJid, { text : text ? text : '' , mentions: participants.map(a => a.id)}, { quoted: msg })
+  AlexaInc.sendMessage(msg.key.remoteJid, { delete: msg.key });
+  break
+}
 
 
 
