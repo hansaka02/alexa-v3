@@ -19,11 +19,17 @@ const {
     WAMessageContent,
     WAMessageKey
 } = require('@whiskeysockets/baileys');
+require('dotenv').config()
 //const art = require('ascii-art');
 let isNewLogin = null;
 //const app = require('./server');
 const baileys = require('@whiskeysockets/baileys')
-
+const mysql = require("mysql2");
+const DB_HOST = process.env["DB_HOST"];
+const DB_UNAME = process.env["DB_UNAME"];
+const DB_NAME = process.env["DB_NAME"];
+const DB_PASS = process.env["DB_PASS"];
+const DB_PORT = process.env["DB_PORT"] || 3306 ;
 
 require('./whatsappState'); // Import shared state
 const {
@@ -45,11 +51,27 @@ const PORT = process.env.PORT || 8000;
 const dataFile = path.join(__dirname, 'sharedData.json');
 const si = require('systeminformation');
 const WebSocket = require('ws');
+const { default: axios } = require('axios');
 const logger = P({
     timestamp: () => `,"time":"${new Date().toJSON()}"`
 }, P.destination('./wa-logs.txt'));
 logger.level = 'debug';
 
+const db = mysql.createConnection({
+  host: DB_HOST,
+  user: DB_UNAME,
+  password: DB_PASS,
+  database: DB_NAME,
+  port:DB_PORT
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error("Error connecting to MySQL:", err);
+  } else {
+    console.log("Connected to MySQL");
+  }
+});
 
 // Store logs in an array, now also keeping HTML-styled logs
 const SESSION_FOLDER = './auth5a'
@@ -126,7 +148,104 @@ const CustomBrowsersMap = {
         console.log(qr);
     })
     AlexaInc.ev.on('creds.update', saveCreds);
-    AlexaInc.ev.on('messages.upsert', (m) => handleMessage(AlexaInc, m)); // Call bot.js function
+
+    AlexaInc.ev.on('group-participants.update', async (anu) => {
+        let groupMetadata = await AlexaInc.groupMetadata(anu.id);
+        let participants = anu.participants;
+        //console.log(participants)
+        
+        for (let num of participants) {
+            let ppuser;
+            let ppgroup;
+            
+            // Fetch user profile picture
+            try {
+                ppuser = await AlexaInc.profilePictureUrl(num, 'image');
+            } catch {
+                ppuser = 'https://github.com/hansaka02/alexa-v3/blob/main/res/img/alexa.jpeg'; // Fallback if no profile picture
+            }
+    
+            // Fetch group profile picture
+            try {
+                ppgroup = await AlexaInc.profilePictureUrl(anu.id, 'image');
+            } catch {
+                ppgroup = 'https://github.com/hansaka02/alexa-v3/blob/main/res/img/alexa.jpeg'; // Fallback if no group picture
+            }
+    
+            // If action is 'add' (someone joined the group)
+            if (anu.action == 'add') {
+                const query = `
+                    SELECT * FROM \`groups\` WHERE group_id = ? AND is_welcome = TRUE
+                `;
+                
+                // Run SQL query to check if welcome message is enabled
+                db.query(query, [anu.id], async (err, result) => {
+                    if (err) {
+                        console.error('Error fetching welcome message:', err);
+                        return;
+                    }
+                    
+                    let wcmsg;
+                    let isWelcome = false;
+    
+                    // Check if result is found and set wcmsg
+                    if (result.length > 0) {
+                        wcmsg = result[0].wc_m;  // Set welcome message from DB
+                        console.log(wcmsg)
+                        isWelcome = true;  // Set welcome flag to true
+                    } else {
+                        wcmsg = groupMetadata.desc; // Fallback to group description
+                    }
+                    
+                    // Fetch the user profile picture as a buffer
+                    let buffer;
+                    try {
+                        buffer = await axios({ method: "get", url: ppuser, responseType: 'arraybuffer' });
+                    } catch (error) {
+                        console.error('Error fetching profile picture:', error);
+                        buffer = null;
+                    }
+    
+                    // Prepare the message to send
+                    if (buffer && isWelcome) {
+                        const fglink = {
+                            key: {
+                                fromMe: false,
+                                "participant": "0@s.whatsapp.net",
+                                "remoteJid": anu.id
+                            },
+                            message: {
+                                orderMessage: {
+                                    itemCount: 9999999,
+                                    status: 200,
+                                    thumbnail: buffer.data,
+                                    surface: 200,
+                                    message: wcmsg,  // Use the welcome message
+                                    orderTitle: 'alexaaa',
+                                    sellerJid: '0@s.whatsapp.net'
+                                }
+                            },
+                            contextInfo: {
+                                "forwardingScore": 999,
+                                "isForwarded": true
+                            },
+                            sendEphemeral: true
+                        };
+    
+                        // Send the image message with the welcome message
+                        await AlexaInc.sendMessage(anu.id, { image: buffer.data }, { quoted: fglink });
+                    }
+                });
+            }
+        }
+    });
+    
+
+    AlexaInc.ev.on('messages.upsert', (m) => {
+
+
+    handleMessage(AlexaInc, m)
+    }); // Call bot.js function
 
     let isConnected = false;
 
@@ -177,8 +296,18 @@ if (connection === 'open') {
             const reason = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.message;
  console.log(reason);
 
+            // if (reason === DisconnectReason.loggedOut) {
+            //     console.log('WhatsApp logged out. Deleting session and restarting...');
+                
+            //     // Delete the authentication folder
+            //     if (fs.existsSync(SESSION_FOLDER)) {
+            //         fs.rmSync(SESSION_FOLDER, { recursive: true, force: true });
+            //     }
 
-                } 
+            //     // Restart the bot
+            //     startWhatsAppConnection();
+            // }
+        } 
     });
 
 

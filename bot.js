@@ -11,7 +11,7 @@ const path = require('path');
 const si = require('os');
 const axios = require('axios');
 const sharp = require('sharp');
-const { downloadMediaMessage, proto, prepareWAMessageMedia , generateWAMessageFromContent} = require('@whiskeysockets/baileys');
+const { downloadMediaMessage, proto, prepareWAMessageMedia , getGroupMetadata , generateWAMessageFromContent} = require('@whiskeysockets/baileys');
 const { generateLinkPreview } = require("link-preview-js");
 //const {generateWAMessageFromContent} = require('@adiwajshing/baileys')
 //const { Button, ButtonMessage } = require('@whiskeysockets/baileys').WA_MESSAGE_TYPE;
@@ -415,12 +415,22 @@ fs.ensureDirSync(TEMP_DIR);
 
 async function handleMessage(AlexaInc, { messages, type }) {
 
-
+        const botNumber = await AlexaInc.user.id.split(':')[0];
                   
       
     if (type === 'notify') {
-        const msg = messages[0];
-       // console.warn(messages[0])
+      const msg = messages[0];
+const isGroup = msg.key.remoteJid.endsWith('@g.us');
+const groupMetadata = isGroup ? await AlexaInc.groupMetadata(msg.key.remoteJid).catch(e => {}) : ''
+const participants = isGroup ? await groupMetadata.participants : ''
+const groupAdmins = isGroup ? await participants.filter(v => v.admin !== null).map(v => v.id) : ''
+const groupOwner = isGroup ? groupMetadata.owner : ''
+//console.log(botNumber)
+const isBotAdmins = isGroup ? groupAdmins.includes(`${botNumber}@s.whatsapp.net`) : false
+const isAdmins = isGroup ? groupAdmins.includes(msg.key.participant) : false
+       
+
+        //console.log(botNumber) // console.warn(messages[0])
 let sender = msg.key.remoteJid; // Default sender
 let senderabfff = msg.key.remoteJid;
 const senderdef = msg.key.remoteJid;
@@ -1238,6 +1248,92 @@ Url: ${response[1].url}
 
 break;
 }
+
+
+//group main functionality
+case 'add': 
+case 'remove': 
+case 'promote': 
+case 'demote': {
+  if (!isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'This is not a group!' });
+  if (!isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are not an admin!' });
+  if (!isBotAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'I am not an admin!' });
+
+  console.log({ isGroup, isAdmins, isBotAdmins });
+
+  if (!args.length) {
+    return AlexaInc.sendMessage(msg.key.remoteJid, { text: `Please provide a number to ${command}!` });
+  }
+
+  const formattedArgs = args.map(arg => arg.replace(/^\+/, '') + '@s.whatsapp.net');
+
+  AlexaInc.groupParticipantsUpdate(
+    msg.key.remoteJid, 
+    formattedArgs, 
+    command // ✅ Uses the dynamic command ('add', 'remove', 'promote', 'demote')
+  ).then(() => {
+    AlexaInc.sendMessage(msg.key.remoteJid, { text: `User(s) ${command}d successfully!` });
+  }).catch(error => {
+    console.error(`Failed to ${command} user(s):`, error);
+    AlexaInc.sendMessage(msg.key.remoteJid, { text: `Failed to ${command} user(s). Maybe the number is incorrect or they have left the group before.` });
+  });
+
+  break;
+}
+
+// set group welcome
+case 'welcomeon': {
+  if (!isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'This is not a group!' });
+  if (!isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are not an admin!' });
+  if (!text) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Welcome message description is not defined! please send a message' });
+  
+
+  // Query to update the group settings in the database
+  const query = `
+    INSERT INTO groups (group_id, is_welcome, wc_m)
+    VALUES (?, TRUE, ?)
+    ON DUPLICATE KEY UPDATE is_welcome = TRUE, wc_m = ?
+  `;
+  
+  // Run the query using MySQL2
+  db.query(query, [msg.key.remoteJid, text, text], (err, result) => {
+    if (err) {
+      console.error('Error updating welcome message:', err);
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Failed to set welcome message.' });
+    }
+
+    AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Welcome message has been set successfully!' });
+  });
+
+  break;
+}
+
+case 'welcomeoff': {
+  if (!isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'This is not a group!' });
+  if (!isAdmins) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'You are not an admin!' });
+
+  // Query to update the group settings in the database
+  const query = `
+    INSERT INTO groups (group_id, is_welcome, wc_m)
+    VALUES (?, FALSE, ?)
+    ON DUPLICATE KEY UPDATE is_welcome = FALSE, wc_m = ?
+  `;
+
+  // Run the query using MySQL2 (set wc_m to null or '' depending on your requirement)
+  db.query(query, [msg.key.remoteJid, null, null], (err, result) => {
+    if (err) {
+      console.error('Error updating welcome message:', err);
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Failed to remove welcome message.' });
+    }
+
+    AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Welcome message has been removed successfully!' });
+  });
+
+  break;
+}
+
+
+
 
 
 
