@@ -172,6 +172,10 @@ const CustomBrowsersMap = {
     AlexaInc.ev.on('creds.update', saveCreds);
 
     AlexaInc.ev.on('group-participants.update', async (anu) => {
+       // console.log(anu);
+        const botNumber = AlexaInc.user.id.split(':')[0];
+        const frommmee = anu.participants.includes(`${botNumber}@s.whatsapp.net`);
+        if (frommmee) return;
         let groupMetadata = await AlexaInc.groupMetadata(anu.id);
         let participants = anu.participants;
         //console.log(participants)

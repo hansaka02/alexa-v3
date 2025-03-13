@@ -243,7 +243,9 @@ const util = require('util');
 
 //console.log('🖥️', cpuData)
 //console.log('𝐑𝐚𝐦', Math.round(memUsed/1e+9) , 'GB of', memTotal)
-const moment = require('moment-timezone')
+const moment = require('moment-timezone');
+const { response } = require('express');
+const { ConsoleMessage } = require('puppeteer');
 
 
 function getGreeting() {
@@ -555,10 +557,12 @@ let menu = `╭━━━━━━━━━━━━━━━━━━━━━�
 
 
 
+         // console.log(msg);
 
 
 
         if (!msg.key.fromMe) {
+
                 AlexaInc.readMessages([msg.key]);
             let messageText = null;
 
@@ -1535,6 +1539,52 @@ case 'hidetag':{
   break
 }
 
+case 'join':{
+
+  if (!isOwner) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'this command for owner only' });
+  if (isGroup) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'this cmd cannot be use in Group' });
+
+
+  if (args.length < 1) return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Please provide a WhatsApp invite link.' });
+
+  const inviteLink = args[0]; 
+  function isValidWhatsAppLink(link) {
+      try {
+          const url = new URL(link);
+          return url.hostname.includes("whatsapp.com");
+      } catch (error) {
+          return false;
+      }
+  }
+
+  if (!isValidWhatsAppLink(inviteLink)) {
+      return AlexaInc.sendMessage(msg.key.remoteJid, { text: 'Invalid link. Please provide a valid WhatsApp invite link.' });
+  }
+
+  function extractInviteCode(inviteLink) {
+    const parts = inviteLink.split('/');
+    return parts[parts.length - 1];
+  }
+const inviteCode = extractInviteCode(inviteLink);
+
+await AlexaInc.groupAcceptInvite(inviteCode).then(response=>{
+  AlexaInc.sendMessage(msg.key.remoteJid, { text: 'join successfully' });
+  console.log(response)
+
+}).catch(err=>{  AlexaInc.sendMessage(msg.key.remoteJid, { text: 'join fail:'+err });})
+
+  break
+}
+
+case 'leave':{
+  if (!isGroup) return await AlexaInc.sendMessage(msg.key.remoteJid,{ text:'this command only gor groups'});
+  if(!isOwner) return await AlexaInc.sendMessage(msg.key.remoteJid,{text:'this command for owner only'});
+  await AlexaInc.groupLeave(msg.key.remoteJid).then(response=>{
+     AlexaInc.sendMessage(msg.key.participant,{text:'group leave sucsessfuly'})
+  }).catch(err=>{console.error(err)})
+
+  break;
+};
 
 
 
