@@ -8,10 +8,8 @@ Alexa V3 is a feature-rich WhatsApp bot developed by Hansaka Rasanjana with ❤�
 - 🛠 Utility Commands
 - 🖼 Sticker & Image Conversion
 - 🌐 Web & Search Functionalities
-- 🎥 YouTube Video & Audio Downloading
+- 🎥 YouTube search & Audio Downloading
 - 👥 Group Management
-- 🔞 NSFW Content
-- 🌸 SFW Content
 - 🪀 Games
 
 
