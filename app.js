@@ -36,6 +36,8 @@ function startApp(scriptName, onExit) {
     } else {
       console.log(`Detected status code 515. Not restarting index.js.`);
       console.log(`Detected status code 515. Restarting index.js in 10 seconds...`);
+            child.removeAllListeners();  // Remove all listeners to avoid duplicate events
+      child.kill();  // Kill the current process
       setTimeout(() => {
           startApp('index.js', () => {});
       }, 5000); // 10-second delay
