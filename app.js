@@ -51,7 +51,7 @@ function startApp(scriptName, onExit) {
       const code = parseInt(line, 10);
       if (!isNaN(code) && code !== 515) {
         restartIndex(code);  // Restart only when a valid code is detected
-      }
+      }else{restartIndex(code);}
     }
   });
 
