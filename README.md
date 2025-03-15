@@ -46,6 +46,7 @@ CREATE TABLE `groups` (
 If you are using local deployement or vps or replit create a `.env` file in the root directory else you using paas(platform as a service) set Environment varible before deploying and configure the following variables:
 
 ```env
+WEBSOCKET_URL=<your deployement publick link>
 CHAT_MODEL=<get it from OpenRouter>
 HUGING_FACE=<hugging face auto taken>
 BOT_NB=<your deployed bot number>
