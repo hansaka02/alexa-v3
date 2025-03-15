@@ -79,7 +79,7 @@ const logger = P({
 }, P.destination('./wa-logs.txt'));
 logger.level = 'debug';
 
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: DB_HOST,
   user: DB_UNAME,
   password: DB_PASS,
@@ -87,7 +87,7 @@ const db = mysql.createConnection({
   port:DB_PORT
 });
 
-db.connect((err) => {
+db.getConnection((err) => {
   if (err) {
     console.error("Error connecting to MySQL:", err);
   } else {
