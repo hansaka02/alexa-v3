@@ -409,11 +409,133 @@ if (conversations.length > 12) {
 }
 
 
-
-
-
 // Ensure temp folder exists
 fs.ensureDirSync(TEMP_DIR);
+
+
+
+
+
+
+
+
+async function getTasks(user_id) {
+  
+  try {
+    const query = `SELECT * FROM \`tasks\` WHERE user_id = ?`;
+    const [results] = await db.promise().query(query, [user_id]);
+    return results;
+  } catch (err) {
+    console.error('Error querying the database:', err);
+    return false;
+  }
+}
+
+
+// getTasks('94740970377@s.whatsapp.net').then(respo=>{
+//  if(!respo.length) return print('no tasks found')
+//  res1 = JSON.parse(respo[0].tasks)
+//  console.log(res1.length)
+//  let repmasg = null;
+//  for (let index = 0; index < res1.length; index++) {
+//   const element = `
+//   task : ${res1[index].task}
+//   status: ${res1[index].status}
+//   `
+//   if (!repmasg){repmasg=element}else{ repmasg=repmasg+element}
+
+//  }
+
+//  print(repmasg)
+
+// })
+
+
+// // Function to update task status
+async function updateTaskStatus(user_id, taskName, newStatus) {
+try {
+  const tasks = await getTasks(user_id);
+  if (!tasks.length) {
+    return 'No tasks found';
+    
+  }
+  let taskList = JSON.parse(tasks[0].tasks);
+  const task = taskList.find(t => t.task === taskName);
+  if (task) {
+    task.status = newStatus;
+    const updatedTasks = JSON.stringify(taskList);
+    const updateQuery = `UPDATE \`tasks\` SET tasks = ? WHERE user_id = ?`;
+    await db.promise().query(updateQuery, [updatedTasks, user_id]);
+    
+    return 'Task status updated successfully';
+  } else {
+    return 'Task not found this name';
+  }
+} catch (err) {
+ 
+  return `\`system erroer try again later:\`${err}`
+}
+}
+
+// Example usage: Update task status for a specific user
+// updateTaskStatus('94740970377@s.whatsapp.net', 'watch1 recodings', 'Completed').then((results) => {
+//   console.log(results)
+//   //console.log('Update complete');
+// });
+
+
+// Function to add a new task
+async function addNewTask(user_id, newTask) {
+try {
+  const tasks = await getTasks(user_id);
+  if (!tasks.length) {
+    const newTaskList = [newTask];
+    const insertQuery = `INSERT INTO \`tasks\` (user_id, tasks) VALUES (?, ?)`;
+    await db.promise().query(insertQuery, [user_id, JSON.stringify(newTaskList)]);
+     return 'New task added successfully';
+  } else {
+    let taskList = JSON.parse(tasks[0].tasks);
+    taskList.push(newTask);
+    const updatedTasks = JSON.stringify(taskList);
+    const updateQuery = `UPDATE \`tasks\` SET tasks = ? WHERE user_id = ?`;
+    await db.promise().query(updateQuery, [updatedTasks, user_id]);
+    return 'New task added successfully';
+  }
+} catch (err) {
+  return `Error adding new task: ${err}`
+}
+}
+
+// Example usage: Add a new task for a specific user
+// const newTask = {
+//   task: 'New Task Example',  // Task name or description
+//   status: 'Pending'          // Task status
+// };
+
+// addNewTask('94740970377@s.whatsapp.net', newTask).then(() => {
+//   console.log('Task addition complete');
+// });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 async function handleMessage(AlexaInc, { messages, type }) {
 
@@ -496,6 +618,8 @@ let menu = `╭━━━━━━━━━━━━━━━━━━━━━�
 ┃ ➥ \`.promote\` - also like add 
 ┃ ➥ \`.demote\` - also like add  
 ┃ ➥ \`.antilink\` - .antilink on/off  
+┃ ➥ \`.hidetag\` - .hidetag msg 
+┃        this will mention all member of group    
 ┃ ➥ \`.antinsfw\` - Similer to antilink  
 ┃ ➥ \`.welcomeon\` - to turn on wc msg 
 ┃ ➥ \`.welcomeoff\` - to turn off wc msg
@@ -1586,7 +1710,60 @@ case 'leave':{
   break;
 };
 
+case 'addtask':{
+ if(!text) return AlexaInc.sendMessage(msg.key.remoteJid,{text:'send with task name .addtask example task'})
+const newTask = {
+  task: text,  
+  status: 'Pending'          
+};
 
+addNewTask(senderabfff, newTask).then((response) => {
+  AlexaInc.sendMessage(msg.key.remoteJid,{text:response})
+});
+break;
+}
+
+case'listtask':{
+
+getTasks(senderabfff).then(respo=>{
+ if(!respo.length) return AlexaInc.sendMessage(msg.key.remoteJid,{text:'no tasks found '})
+ res1 = JSON.parse(respo[0].tasks)
+ console.log(res1.length)
+ let repmasg = null;
+ for (let index = 0; index < res1.length; index++) {
+  const element = `
+  task : ${res1[index].task}
+  status: ${res1[index].status}
+  `
+  if (!repmasg){repmasg=element}else{ repmasg=repmasg+element}
+
+ }
+
+ AlexaInc.sendMessage(msg.key.remoteJid,{text:repmasg})
+
+
+})
+
+
+  break
+}
+
+case 'completetask' :{
+  if (!text) return  AlexaInc.sendMessage(msg.key.remoteJid,{text:'please enter task name .compleatetask example task'})
+updateTaskStatus(senderabfff, text, 'Completed').then((results) => {
+  AlexaInc.sendMessage(msg.key.remoteJid,{text:results})
+
+});
+  break;
+}
+case 'restarttask' :{
+  if (!text) return  AlexaInc.sendMessage(msg.key.remoteJid,{text:'please enter task name .restarttask example task'})
+updateTaskStatus(senderabfff, text, 'Pending').then((results) => {
+  AlexaInc.sendMessage(msg.key.remoteJid,{text:results})
+
+});
+  break;
+}
 
 default :{
   const rep = `
